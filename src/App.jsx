@@ -52,9 +52,11 @@ function App() {
     );
   }
 
+  const basenamePath = "/cia-lpdb";
+
   return (
     <ApiProvider>
-      <Router>
+      <Router basename={basenamePath}>
         <Routes>
           <Route
             path="/login"
@@ -81,7 +83,10 @@ function App() {
                     <Route path="/applications" element={<Applications />} />
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/configuration" element={<Configuration />} />
-                    <Route path="/api-configuration" element={<ApiConfiguration />} />
+                    <Route
+                      path="/api-configuration"
+                      element={<ApiConfiguration />}
+                    />
                     <Route path="/admin" element={<Admin />} />
                   </Routes>
                 </Layout>
