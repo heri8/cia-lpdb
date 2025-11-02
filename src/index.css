@@ -1,0 +1,166 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .gradient-bg {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  }
+  .sidebar-gradient {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  }
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+  }
+  .glow-success {
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+  .glow-warning {
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+  }
+  .glow-danger {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+  .progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    background-color: #e5e7eb;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+  .drop-zone {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  .drop-zone.active {
+    border-color: #0ea5e9;
+    background-color: #f0f9ff;
+  }
+  .file-item {
+    transition: all 0.3s ease;
+  }
+  .file-item:hover {
+    background-color: #f8fafc;
+  }
+}
+
+/* Jika shadow-soft masih tidak bekerja, tambahkan fallback */
+.shadow-soft {
+  box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07),
+    0 10px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Pastikan warna custom tersedia */
+@layer utilities {
+  .text-success {
+    color: #10b981;
+  }
+  .text-warning {
+    color: #f59e0b;
+  }
+  .text-danger {
+    color: #ef4444;
+  }
+  .text-info {
+    color: #06b6d4;
+  }
+  .bg-success {
+    background-color: #10b981;
+  }
+  .bg-warning {
+    background-color: #f59e0b;
+  }
+  .bg-danger {
+    background-color: #ef4444;
+  }
+  .bg-info {
+  }
+}
+
+.bg-pattern {
+  background-image: radial-gradient(
+      circle at 25% 25%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 75% 75%,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 50%
+    );
+}
+
+/* Animation untuk loading */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.sidebar-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Custom scrollbar untuk sidebar */
+.sidebar-gradient::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-gradient::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-gradient::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.sidebar-gradient::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Overlay animation */
+.overlay-enter {
+  opacity: 0;
+}
+
+.overlay-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+
+.overlay-exit {
+  opacity: 1;
+}
+
+.overlay-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
