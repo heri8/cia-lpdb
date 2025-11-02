@@ -52,11 +52,9 @@ function App() {
     );
   }
 
-  const basenamePath = "/cia-lpdb";
-
   return (
     <ApiProvider>
-      <Router basename={basenamePath}>
+      <Router>
         <Routes>
           <Route
             path="/login"
