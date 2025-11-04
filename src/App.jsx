@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import ApiConfiguration from "./pages/ApiConfiguration";
 
 function App() {
+  const basenamePath = '/cia-lpdb/';
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -54,7 +55,7 @@ function App() {
 
   return (
     <ApiProvider>
-      <Router>
+      <Router basename={basenamePath}>
         <Routes>
           <Route
             path="/login"
