@@ -166,6 +166,7 @@ const Applications = () => {
   //   refetch,
   // } = useApi(applicationsAPI.getAll);
 
+
   const applications = mockApplications;
   const loading = false;
   const error = null;

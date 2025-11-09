@@ -83,19 +83,7 @@ export const systemAPI = {
 
   getStatus: () => httpService.get("/system/status"),
 
-  // Dynamic baseURL update from backend
-  updateBaseURL: async (newBaseURL) => {
-    // Validate the new baseURL
-    try {
-      const response = await fetch(`${newBaseURL}/system/health`);
-      if (response.ok) {
-        apiConfig.setBaseURL(newBaseURL);
-        return { success: true, message: "BaseURL updated successfully" };
-      }
-    } catch (error) {
-      throw new Error("Failed to validate new BaseURL");
-    }
-  },
+  checkHealth: () => httpService.get("/health"),
 };
 
 // LLM Assistant API

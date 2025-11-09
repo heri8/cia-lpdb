@@ -14,34 +14,11 @@ export const useApi = () => {
 
 export const ApiProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [baseURL, setBaseURL] = useState(apiConfig.getBaseURL());
-
-  // Update baseURL dynamically
-  const updateBaseURL = async (newBaseURL) => {
-    setIsLoading(true);
-    try {
-      apiConfig.setBaseURL(newBaseURL);
-      setBaseURL(newBaseURL);
-      return { success: true };
-    } catch (error) {
-      console.error("Failed to update baseURL:", error);
-      return { success: false, error: error.message };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Reset to default baseURL
-  const resetBaseURL = () => {
-    apiConfig.resetConfig();
-    setBaseURL(apiConfig.getBaseURL());
-  };
+  const [baseURL] = useState(apiConfig.getBaseURL());
 
   const value = {
     baseURL,
     isLoading,
-    updateBaseURL,
-    resetBaseURL,
     getConfig: apiConfig.getConfig,
   };
 

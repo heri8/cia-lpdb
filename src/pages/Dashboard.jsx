@@ -1,4 +1,6 @@
 import { lazy } from "react";
+import { dashboardAPI } from "../services/api";
+import { useApi } from "../contexts/ApiContext";
 
 const StatsCards = lazy(() => import("../components/Dashboard/StatsCards"));
 const RecentApplications = lazy(() =>
@@ -14,6 +16,18 @@ const RecentActivity = lazy(() =>
 );
 
 const Dashboard = () => {
+
+  const {
+    data: applications,
+    loading,
+    error,
+    refetch,
+  } = useApi(dashboardAPI.healthCheck);
+
+  console.log('tes API: ');
+  
+
+  
   return (
     <div className="h-full overflow-auto">
       {/* Stats Cards Section */}

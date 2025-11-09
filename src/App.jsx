@@ -19,6 +19,8 @@ const Configuration = lazy(() => import("./pages/Configuration"));
 const Admin = lazy(() => import("./pages/Admin"));
 const RoleRouteGuard = lazy(() => import("./components/Auth/RoleRouteGuard"));
 
+const ApiConfiguration = lazy(() => import("./pages/ApiConfiguration"));
+
 const AppRouter = () => {
   const { isAuthenticated, isLoading, logout } = useAuth();
 
@@ -51,6 +53,17 @@ const AppRouter = () => {
                 <Route
                   path="/"
                   element={<Navigate to="/dashboard" replace />}
+                />
+
+                <Route
+                  path="/api-configuration"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[USER_ROLES.ADMIN]}
+                    >
+                      <ApiConfiguration />
+                    </RoleRouteGuard>
+                  }
                 />
 
                 <Route

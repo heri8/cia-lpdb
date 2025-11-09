@@ -12,7 +12,7 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
     { path: "/applications", icon: "list", label: "Daftar Aplikasi", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST, USER_ROLES.REVIEWER] },
     { path: "/analytics", icon: "chart-bar", label: "Analytics", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST] },
     { path: "/configuration", icon: "cog", label: "Konfigurasi", roles: [USER_ROLES.ADMIN] }, // Hanya Admin
-    // { path: '/api-configuration', icon: 'server', label: 'API Config', roles: [USER_ROLES.ADMIN] }, // Jika ini diaktifkan
+    { path: '/api-configuration', icon: 'server', label: 'API Config', roles: [USER_ROLES.ADMIN] }, // Jika ini diaktifkan
     { path: "/admin", icon: "shield-alt", label: "Admin & Audit", roles: [USER_ROLES.ADMIN] }, // Hanya Admin
   ];
 

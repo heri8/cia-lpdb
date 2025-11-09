@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApi } from "../contexts/ApiContext";
-import BaseURLConfig from "../components/Configuration/BaseURLConfig";
+import ConnectionChecker from "../components/Configuration/ConnectionChecker";
 
 const ApiConfiguration = () => {
   const { baseURL } = useApi();
@@ -31,9 +31,9 @@ const ApiConfiguration = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* BaseURL Configuration */}
+          {/* Connection Checker */}
           <div className="lg:col-span-2">
-            <BaseURLConfig />
+            <ConnectionChecker />
           </div>
 
           {/* API Settings */}

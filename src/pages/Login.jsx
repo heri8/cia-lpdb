@@ -30,42 +30,37 @@ const Login = () => {
       // ----------------------------------------------------
       // INI ADALAH BLOK SIMULASI API (Ganti ketika backend siap)
       // ----------------------------------------------------
-      console.log("SIMULASI: Mencoba login sebagai Admin...");
 
-      // Simulasi penundaan jaringan 1.5 detik
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // ----------------------------------------------------
-      // 🚨 KONDISI DUMMY LOGIN (HANYA UNTUK DEBUG) 🚨
-      // Kita anggap login sukses jika email adalah 'admin@test.com'
       if (
-        credentials.email === "admin@test.com" &&
+        credentials.email === "admin@lpdb.com" &&
         credentials.password === "password"
       ) {
         // Panggil fungsi login yang menyimpan token, role, dan nama pengguna
         // Menggunakan data dummy ADMIN
         login({
           token: "dummy_admin_token_12345",
-          name: "Admin CIA",
+          name: "Admin LPDB",
           role: "ADMIN",
         });
 
         // Redirect ke halaman Dashboard setelah berhasil login
         navigate("/dashboard", { replace: true });
       } else if (
-        credentials.email === "analyst@test.com" &&
+        credentials.email === "analis@lpdb.com" &&
         credentials.password === "password"
       ) {
         // CONTOH DUMMY ANALYST
         login({
           token: "dummy_analyst_token",
-          name: "John Analyst",
+          name: "Analyst LPDB",
           role: "ANALYST",
         });
         navigate("/dashboard", { replace: true });
       } else {
         // Gagal login
-        throw new Error("Email atau Password salah. (Simulasi)");
+        throw new Error("Email atau Password salah.");
       }
       // ----------------------------------------------------
     } catch (err) {
@@ -284,6 +279,7 @@ const Login = () => {
 
         <div className="relative h-full flex items-center justify-center p-12">
           <div className="max-w-lg text-white text-center">
+            
             {/* Animated Icon */}
             <div className="w-24 h-24 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-8 backdrop-blur-sm border border-white/20">
               <i className="fas fa-chart-line text-white text-3xl"></i>
