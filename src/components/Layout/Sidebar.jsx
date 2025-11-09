@@ -1,17 +1,22 @@
 import { Link, useLocation } from "react-router-dom";
 
+import { useAuth, USER_ROLES } from "../../contexts/AuthContext";
+
 const Sidebar = ({ isOpen, onClose, onLogout }) => {
   const location = useLocation();
+  const { hasRole } = useAuth();
 
-  const menuItems = [
-    { path: "/dashboard", icon: "chart-pie", label: "Dashboard" },
-    { path: "/upload", icon: "file-upload", label: "Upload Dokumen" },
-    { path: "/applications", icon: "list", label: "Daftar Aplikasi" },
-    { path: "/analytics", icon: "chart-bar", label: "Analytics" },
-    { path: "/configuration", icon: "cog", label: "Konfigurasi" },
-    { path: '/api-configuration', icon: 'server', label: 'API Config' },
-    { path: "/admin", icon: "shield-alt", label: "Admin & Audit" },
+  const allMenuItems = [
+    { path: "/dashboard", icon: "chart-pie", label: "Dashboard", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST, USER_ROLES.REVIEWER] },
+    { path: "/upload", icon: "file-upload", label: "Upload Dokumen", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST] },
+    { path: "/applications", icon: "list", label: "Daftar Aplikasi", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST, USER_ROLES.REVIEWER] },
+    { path: "/analytics", icon: "chart-bar", label: "Analytics", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST] },
+    { path: "/configuration", icon: "cog", label: "Konfigurasi", roles: [USER_ROLES.ADMIN] }, // Hanya Admin
+    // { path: '/api-configuration', icon: 'server', label: 'API Config', roles: [USER_ROLES.ADMIN] }, // Jika ini diaktifkan
+    { path: "/admin", icon: "shield-alt", label: "Admin & Audit", roles: [USER_ROLES.ADMIN] }, // Hanya Admin
   ];
+
+  const menuItems = allMenuItems.filter(item => hasRole(item.roles));
 
   const handleLinkClick = () => {
     // Tutup sidebar ketika link diklik di mobile

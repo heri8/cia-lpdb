@@ -13,6 +13,19 @@ export const authAPI = {
   getProfile: () => httpService.get("/auth/profile"),
 };
 
+export const dashboardAPI = {
+  getStats: () => httpService.get("/dashboard/stats"),
+
+  getRecentApplications: (limit = 5) =>
+    httpService.get("/dashboard/recent-applications", { params: { limit } }),
+
+  getOtsRecommendations: (limit = 3) =>
+    httpService.get("/dashboard/ots-recommendations", { params: { limit } }),
+
+  getRecentActivity: (limit = 5) =>
+    httpService.get("/dashboard/recent-activity", { params: { limit } }),
+};
+
 // Applications API
 export const applicationsAPI = {
   getAll: (params = {}) => httpService.get("/applications", { params }),
@@ -38,6 +51,12 @@ export const documentsAPI = {
   process: (documentId) => httpService.post(`/documents/${documentId}/process`),
 
   getStatus: (documentId) => httpService.get(`/documents/${documentId}/status`),
+
+  getUploadedDocuments: (applicationId) =>
+    httpService.get(`/applications/${applicationId}/documents`),
+
+  getUploadHistory: (applicationId) =>
+    httpService.get(`/applications/${applicationId}/upload-history`),
 
   download: (documentId) =>
     httpService.get(`/documents/${documentId}/download`),
@@ -94,6 +113,7 @@ export const llmAPI = {
 // Export all APIs
 export default {
   auth: authAPI,
+  dashboard: dashboardAPI,
   applications: applicationsAPI,
   documents: documentsAPI,
   analytics: analyticsAPI,

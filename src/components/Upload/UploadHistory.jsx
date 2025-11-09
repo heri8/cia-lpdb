@@ -1,27 +1,31 @@
+import { useUploadHistory } from "../../hooks/useUploadData";
+
 const UploadHistory = () => {
-  const history = [
-    {
-      id: "APL-2023-0014",
-      name: "PT. Global Mandiri",
-      date: "12 Nov 2023, 14:30",
-      status: "Selesai",
-      statusColor: "green",
-    },
-    {
-      id: "APL-2023-0013",
-      name: "CV. Sejahtera Jaya",
-      date: "11 Nov 2023, 09:15",
-      status: "Proses OCR",
-      statusColor: "yellow",
-    },
-    {
-      id: "APL-2023-0012",
-      name: "PT. Maju Jaya Abadi",
-      date: "10 Nov 2023, 16:45",
-      status: "Selesai",
-      statusColor: "green",
-    },
-  ];
+  const { history } = useUploadHistory();
+
+  // const history = [
+  //   {
+  //     id: "APL-2023-0014",
+  //     name: "PT. Global Mandiri",
+  //     date: "12 Nov 2023, 14:30",
+  //     status: "Selesai",
+  //     statusColor: "green",
+  //   },
+  //   {
+  //     id: "APL-2023-0013",
+  //     name: "CV. Sejahtera Jaya",
+  //     date: "11 Nov 2023, 09:15",
+  //     status: "Proses OCR",
+  //     statusColor: "yellow",
+  //   },
+  //   {
+  //     id: "APL-2023-0012",
+  //     name: "PT. Maju Jaya Abadi",
+  //     date: "10 Nov 2023, 16:45",
+  //     status: "Selesai",
+  //     statusColor: "green",
+  //   },
+  // ];
 
   const getStatusClass = (color) => {
     const classes = {

@@ -1,99 +1,179 @@
 // src/App.jsx
+import { lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { ApiProvider } from "./contexts/ApiContext";
-import Layout from "./components/Layout/Layout";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Upload from "./pages/Upload";
-import Applications from "./pages/Applications";
-import Analytics from "./pages/Analytics";
-import Configuration from "./pages/Configuration";
-import Admin from "./pages/Admin";
-import ApiConfiguration from "./pages/ApiConfiguration";
+import { AuthProvider, USER_ROLES, useAuth } from "./contexts/AuthContext";
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+const Layout = lazy(() => import("./components/Layout/Layout"));
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Upload = lazy(() => import("./pages/Upload"));
+const Applications = lazy(() => import("./pages/Applications"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Configuration = lazy(() => import("./pages/Configuration"));
+const Admin = lazy(() => import("./pages/Admin"));
+const RoleRouteGuard = lazy(() => import("./components/Auth/RoleRouteGuard"));
 
-  useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem("authToken");
-      setIsAuthenticated(!!token);
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
-
-  const handleLogin = () => {
-    localStorage.setItem("authToken", "dummy-token");
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    setIsAuthenticated(false);
-  };
+const AppRouter = () => {
+  const { isAuthenticated, isLoading, logout } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Memuat...</p>
+          <p className="text-gray-600">Memuat sesi...</p>
         </div>
       </div>
     );
   }
 
   return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+        }
+      />
+      <Route
+        path="/*"
+        element={
+          isAuthenticated ? (
+            <Layout onLogout={logout}>
+              {" "}
+              <Routes>
+                <Route
+                  path="/"
+                  element={<Navigate to="/dashboard" replace />}
+                />
+
+                <Route
+                  path="/analytics"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.ANALYST]}
+                    >
+                      <Analytics />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/upload"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.ANALYST]}
+                    >
+                      <Upload />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/dashboard"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[
+                        USER_ROLES.ADMIN,
+                        USER_ROLES.ANALYST,
+                        USER_ROLES.REVIEWER,
+                      ]}
+                    >
+                      <Dashboard />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/admin"
+                  element={
+                    <RoleRouteGuard requiredRoles={[USER_ROLES.ADMIN]}>
+                      <Admin />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/configuration"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.ANALYST]}
+                    >
+                      <Configuration />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/applications"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[
+                        USER_ROLES.ADMIN,
+                        USER_ROLES.ANALYST,
+                        USER_ROLES.REVIEWER,
+                      ]}
+                    >
+                      <Applications />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="*"
+                  element={
+                    <div className="p-6 text-center">
+                      <h2 className="text-2xl font-bold">
+                        404 - Halaman Tidak Ditemukan
+                      </h2>
+                      <p className="text-gray-500 mt-2">
+                        Periksa URL Anda atau kembali ke Dashboard.
+                      </p>
+                      <button
+                        onClick={() => (window.location.href = "/dashboard")}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+                      >
+                        Kembali ke Dashboard
+                      </button>
+                    </div>
+                  }
+                />
+              </Routes>
+            </Layout>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="*"
+        element={
+          <div className="min-h-screen flex items-center justify-center">
+            <h2 className="text-2xl font-bold">
+              404 - Halaman Tidak Ditemukan
+            </h2>
+          </div>
+        }
+      />
+    </Routes>
+  );
+};
+
+function App() {
+  return (
     <ApiProvider>
       <Router>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              isAuthenticated ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Login onLogin={handleLogin} />
-              )
-            }
-          />
-          <Route
-            path="/*"
-            element={
-              isAuthenticated ? (
-                <Layout onLogout={handleLogout}>
-                  <Routes>
-                    <Route
-                      path="/"
-                      element={<Navigate to="/dashboard" replace />}
-                    />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/upload" element={<Upload />} />
-                    <Route path="/applications" element={<Applications />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/configuration" element={<Configuration />} />
-                    <Route
-                      path="/api-configuration"
-                      element={<ApiConfiguration />}
-                    />
-                    <Route path="/admin" element={<Admin />} />
-                  </Routes>
-                </Layout>
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-        </Routes>
+        {" "}
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
       </Router>
     </ApiProvider>
   );

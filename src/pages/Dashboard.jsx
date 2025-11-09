@@ -1,9 +1,17 @@
-import StatsCards from "../components/Dashboard/StatsCards";
-import RecentApplications from "../components/Dashboard/RecentApplications";
-import OTSRecommendations from "../components/Dashboard/OTSRecommendations";
-import LLMAssistant from "../components/Dashboard/LLMAssistant";
-import SystemStatus from "../components/Dashboard/SystemStatus";
-import RecentActivity from "../components/Dashboard/RecentActivity";
+import { lazy } from "react";
+
+const StatsCards = lazy(() => import("../components/Dashboard/StatsCards"));
+const RecentApplications = lazy(() =>
+  import("../components/Dashboard/RecentApplications")
+);
+const OTSRecommendations = lazy(() =>
+  import("../components/Dashboard/OTSRecommendations")
+);
+const LLMAssistant = lazy(() => import("../components/Dashboard/LLMAssistant"));
+const SystemStatus = lazy(() => import("../components/Dashboard/SystemStatus"));
+const RecentActivity = lazy(() =>
+  import("../components/Dashboard/RecentActivity")
+);
 
 const Dashboard = () => {
   return (

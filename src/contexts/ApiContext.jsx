@@ -1,7 +1,6 @@
 // src/contexts/ApiContext.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import apiConfig from "../config/api";
-import { systemAPI } from "../services/api";
 
 const ApiContext = createContext();
 
@@ -17,32 +16,11 @@ export const ApiProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [baseURL, setBaseURL] = useState(apiConfig.getBaseURL());
 
-  // Initialize API configuration
-  useEffect(() => {
-    initializeAPI();
-  }, []);
-
-  const initializeAPI = async () => {
-    try {
-      // Try to get configuration from backend
-      const config = await systemAPI.getConfig();
-      if (config && config.baseURL) {
-        apiConfig.setBaseURL(config.baseURL);
-        setBaseURL(config.baseURL);
-      }
-    } catch (error) {
-      console.warn(
-        "Failed to get config from backend, using default:",
-        apiConfig.getBaseURL()
-      );
-    }
-  };
-
   // Update baseURL dynamically
   const updateBaseURL = async (newBaseURL) => {
     setIsLoading(true);
     try {
-      await systemAPI.updateBaseURL(newBaseURL);
+      apiConfig.setBaseURL(newBaseURL);
       setBaseURL(newBaseURL);
       return { success: true };
     } catch (error) {

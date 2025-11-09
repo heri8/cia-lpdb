@@ -1,35 +1,46 @@
+import { useState } from "react";
+import { useApi } from "../../hooks/useApi";
+import { dashboardAPI } from "../../services/api";
+
 const RecentApplications = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  // TODO: jika api backend sudah ada
+  // const {
+  //   data: applications,
+  //   loading,
+  //   error,
+  // } = useApi(dashboardAPI.getRecentApplications);
+
   const applications = [
     {
       id: "APL-2023-0012",
       name: "PT. Maju Jaya Abadi",
       score: 85,
       status: "Layak",
-      statusColor: "green",
     },
     {
       id: "APL-2023-0011",
       name: "CV. Sejahtera Bersama",
       score: 75,
       status: "Layak Bersyarat",
-      statusColor: "yellow",
     },
     {
       id: "APL-2023-0010",
       name: "UD. Makmur Sentosa",
       score: 45,
       status: "Tidak Layak",
-      statusColor: "red",
     },
   ];
 
-  const getStatusClass = (color) => {
+  const getStatusClass = (statusText) => {
     const classes = {
-      green: "bg-green-100 text-green-800",
-      yellow: "bg-yellow-100 text-yellow-800",
-      red: "bg-red-100 text-red-800",
+      Layak: "bg-green-100 text-green-800",
+      "Layak Bersyarat": "bg-yellow-100 text-yellow-800",
+      "Tidak Layak": "bg-red-100 text-red-800",
+      default: "bg-gray-100 text-gray-800",
     };
-    return classes[color] || classes.green;
+    return classes[statusText] || classes.default;
   };
 
   const getProgressColor = (score) => {
@@ -37,6 +48,53 @@ const RecentApplications = () => {
     if (score >= 70) return "bg-warning";
     return "bg-danger";
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-soft overflow-hidden border border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-800">Aplikasi Terbaru</h3>
+        </div>
+        <div className="p-6">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-10 bg-gray-100 rounded"></div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-gray-500 mt-4">
+            Memuat data aplikasi...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-red-700">
+        <p className="font-semibold mb-2">
+          <i className="fas fa-exclamation-triangle mr-2"></i> Gagal Memuat
+          Aplikasi
+        </p>
+        <p className="text-sm">Terjadi kesalahan: {error}</p>
+        <p className="text-xs mt-1">Pastikan koneksi API dashboard berjalan.</p>
+      </div>
+    );
+  }
+
+  if (!applications || applications.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-soft p-6 border border-gray-100">
+        <h3 className="text-xl font-semibold text-gray-800 mb-4">
+          Aplikasi Terbaru
+        </h3>
+        <div className="text-center py-10 text-gray-500">
+          <i className="fas fa-inbox text-4xl mb-3"></i>
+          <p className="font-medium">Tidak ada aplikasi baru saat ini.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-soft overflow-hidden border border-gray-100">
@@ -86,10 +144,10 @@ const RecentApplications = () => {
                     <span className="font-medium">{app.score}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`px-3 py-1 text-xs rounded-full ${getStatusClass(
-                      app.statusColor
+                      app.status
                     )} font-medium`}
                   >
                     {app.status}

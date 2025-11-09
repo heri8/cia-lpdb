@@ -1,11 +1,17 @@
 import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { authAPI } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
-const Login = ({ onLogin }) => {
+const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -18,13 +24,80 @@ const Login = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
-    // Simulasi proses login
-    setTimeout(() => {
-      console.log("Login attempt:", credentials);
+    try {
+      // ----------------------------------------------------
+      // INI ADALAH BLOK SIMULASI API (Ganti ketika backend siap)
+      // ----------------------------------------------------
+      console.log("SIMULASI: Mencoba login sebagai Admin...");
+
+      // Simulasi penundaan jaringan 1.5 detik
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // ----------------------------------------------------
+      // 🚨 KONDISI DUMMY LOGIN (HANYA UNTUK DEBUG) 🚨
+      // Kita anggap login sukses jika email adalah 'admin@test.com'
+      if (
+        credentials.email === "admin@test.com" &&
+        credentials.password === "password"
+      ) {
+        // Panggil fungsi login yang menyimpan token, role, dan nama pengguna
+        // Menggunakan data dummy ADMIN
+        login({
+          token: "dummy_admin_token_12345",
+          name: "Admin CIA",
+          role: "ADMIN",
+        });
+
+        // Redirect ke halaman Dashboard setelah berhasil login
+        navigate("/dashboard", { replace: true });
+      } else if (
+        credentials.email === "analyst@test.com" &&
+        credentials.password === "password"
+      ) {
+        // CONTOH DUMMY ANALYST
+        login({
+          token: "dummy_analyst_token",
+          name: "John Analyst",
+          role: "ANALYST",
+        });
+        navigate("/dashboard", { replace: true });
+      } else {
+        // Gagal login
+        throw new Error("Email atau Password salah. (Simulasi)");
+      }
+      // ----------------------------------------------------
+    } catch (err) {
+      // Tampilkan error jika login gagal
+      console.error("Login Gagal:", err.message);
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-      onLogin(); // Panggil callback dari parent
-    }, 1500);
+    }
+  };
+
+  // TODO: digunakan jika api backend sudah siap
+  const handleSubmitBackup = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await authAPI.login(credentials);
+
+      if (response && response.token && response.role) {
+        login(response);
+
+        navigate("/dashboard", { replace: true });
+      } else {
+        throw new Error("Respons API tidak valid.");
+      }
+    } catch (err) {
+      console.error("Login Gagal:", err);
+      setError("Login Gagal: Periksa kembali email dan password Anda.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -52,6 +125,15 @@ const Login = ({ onLogin }) => {
               Masuk ke sistem analisis kredit terintegrasi
             </p>
           </div>
+
+          {error && (
+            <div
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-sm mb-3"
+              role="alert"
+            >
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
 
           {/* Login Form */}
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -105,7 +187,7 @@ const Login = ({ onLogin }) => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -129,7 +211,7 @@ const Login = ({ onLogin }) => {
                   Lupa password?
                 </a>
               </div>
-            </div>
+            </div> */}
 
             <div>
               <button
@@ -153,7 +235,7 @@ const Login = ({ onLogin }) => {
           </form>
 
           {/* Divider */}
-          <div className="mt-8">
+          {/* <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
@@ -182,7 +264,7 @@ const Login = ({ onLogin }) => {
                 Microsoft
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Footer */}
           <div className="mt-8 text-center">
