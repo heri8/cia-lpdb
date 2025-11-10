@@ -20,10 +20,17 @@ export const useApi = (apiFunction, dependencies = []) => {
       try {
         const result = await apiFunction();
         if (mounted) {
-          setData(result);
+          const finalData = Array.isArray(result)
+            ? result
+            : result === null || result === undefined
+            ? []
+            : result;
+
+          setData(finalData);
         }
       } catch (err) {
         if (mounted) {
+          setData([]);
           setError(err.message);
         }
       } finally {

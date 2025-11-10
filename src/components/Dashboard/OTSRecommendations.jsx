@@ -3,37 +3,38 @@ import { useApi } from "../../hooks/useApi";
 import { dashboardAPI } from "../../services/api";
 
 const OTSRecommendations = () => {
-  // const {
-  //   data: recommendations,
-  //   loading,
-  //   error,
-  // } = useApi(dashboardAPI.getOtsRecommendations);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const {
+    data: recommendations,
+    loading,
+    error,
+  } = useApi(dashboardAPI.getOtsRecommendations);
 
-  const recommendations = [
-    {
-      id: "APL-2023-0011",
-      name: "CV. Sejahtera Bersama",
-      issue: "Perbaikan dokumen agunan utama",
-      timestamp: "2024-11-12T14:30:00Z",
-      type: "warning",
-    },
-    {
-      id: "APL-2023-0009",
-      name: "PT. Bina Usaha",
-      issue: "Lengkapi izin usaha yang berlaku",
-      timestamp: "2024-11-12T14:30:00Z",
-      type: "danger",
-    },
-    {
-      id: "APL-2023-0008",
-      name: "UD. Sumber Rejeki",
-      issue: "Perbaikan laporan keuangan 6 bulan terakhir",
-      timestamp: "2024-11-12T14:30:00Z",
-      type: "warning",
-    },
-  ];
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState(false);
+
+  // const recommendations = [
+  //   {
+  //     id: "APL-2023-0011",
+  //     name: "CV. Sejahtera Bersama",
+  //     issue: "Perbaikan dokumen agunan utama",
+  //     timestamp: "2024-11-12T14:30:00Z",
+  //     type: "warning",
+  //   },
+  //   {
+  //     id: "APL-2023-0009",
+  //     name: "PT. Bina Usaha",
+  //     issue: "Lengkapi izin usaha yang berlaku",
+  //     timestamp: "2024-11-12T14:30:00Z",
+  //     type: "danger",
+  //   },
+  //   {
+  //     id: "APL-2023-0008",
+  //     name: "UD. Sumber Rejeki",
+  //     issue: "Perbaikan laporan keuangan 6 bulan terakhir",
+  //     timestamp: "2024-11-12T14:30:00Z",
+  //     type: "warning",
+  //   },
+  // ];
 
   const timeSince = (timestamp) => {
     const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);

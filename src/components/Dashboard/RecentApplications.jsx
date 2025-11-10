@@ -3,14 +3,15 @@ import { useApi } from "../../hooks/useApi";
 import { dashboardAPI } from "../../services/api";
 
 const RecentApplications = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  // TODO: jika api backend sudah ada
   // const {
   //   data: applications,
   //   loading,
   //   error,
   // } = useApi(dashboardAPI.getRecentApplications);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  // TODO: jika api backend sudah ada
 
   const applications = [
     {

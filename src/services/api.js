@@ -1,6 +1,5 @@
 // src/services/api.js
 import httpService from "./http";
-import apiConfig from "../config/api";
 
 // Authentication API
 export const authAPI = {
@@ -64,8 +63,8 @@ export const documentsAPI = {
 
 // Analytics API
 export const analyticsAPI = {
-  getDashboardStats: () => httpService.get("/analytics/dashboard"),
-
+  getDashboardAnalytics: () => httpService.get("/analytics/dashboard"), 
+  
   getApplicationTrends: (period) =>
     httpService.get("/analytics/trends", { params: { period } }),
 
@@ -98,6 +97,15 @@ export const llmAPI = {
     httpService.post(`/llm/analyze/${applicationId}`),
 };
 
+export const adminAPI = {
+  getAllUsers: (params = {}) => httpService.get("/admin/users", { params }),
+
+  getAuditLogs: (params = {}) =>
+    httpService.get("/admin/audit-logs", { params }),
+
+  createUser: (userData) => httpService.post("/admin/users", userData),
+};
+
 // Export all APIs
 export default {
   auth: authAPI,
@@ -107,4 +115,5 @@ export default {
   analytics: analyticsAPI,
   system: systemAPI,
   llm: llmAPI,
+  admin: adminAPI,
 };

@@ -1,142 +1,233 @@
 import { useEffect, useState } from "react";
+import { applicationsAPI } from "../../services/api";
 
 const ApplicationInfo = ({ isModal = false, prefilledId = null }) => {
-  const [formData, setFormData] = useState({
-    applicationId:
-      prefilledId ||
-      `APL-${new Date().getFullYear()}-${String(
-        Math.floor(Math.random() * 9999)
-      ).padStart(4, "0")}`,
-    companyName: "",
-    businessType: "",
-    sector: "",
-    address: "",
-  });
+    const [formData, setFormData] = useState({
+        // Data Institusi
+        nama_koperasi: "",
+        npwp_institusi: "",
+        nomor_nik_koperasi: "",
+        grade_koperasi: "A", // Default nilai awal
+        kota_domisili: "",
+        tipe_sektor: "SEKTOR_RIIL", // Default nilai awal
 
-  useEffect(() => {
-    if (prefilledId) {
-      setFormData((prev) => ({ ...prev, applicationId: prefilledId }));
-    }
-  }, [prefilledId]);
+        // Data Proposal
+        nomor_proposal_internal: "",
+        // Format YYYY-MM-DD untuk input type="date"
+        tanggal_proposal: new Date().toISOString().substring(0, 10),
+        jumlah_pembiayaan_diajukan: 0,
+        tujuan_pembiayaan: "",
+        suku_bunga_diminta: 0,
+        tenor_diminta_bulan: 0,
+    });
+    const [saveMessage, setSaveMessage] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+    useEffect(() => {
+        if (prefilledId) {
+            setFormData((prev) => ({ ...prev, applicationId: prefilledId }));
+        }
+    }, [prefilledId]);
 
-  return (
-    <div
-      className={
-        !isModal
-          ? "bg-white rounded-2xl shadow-soft p-6 mb-6 border border-gray-100"
-          : ""
-      }
-    >
-      {!isModal && (
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              Informasi Aplikasi Pinjaman
-            </h3>
-            <p className="text-sm text-gray-500">
-              Lengkapi data aplikasi sebelum mengunggah dokumen
-            </p>
-          </div>
-          <span className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-medium">
-            Draft
-          </span>
+    const isDisabled = !isModal && !!prefilledId;
+
+    const handleInputChange = (e) => {
+        const { name, value, type } = e.target;
+        let finalValue = value;
+
+        // Menangani konversi untuk input bertipe number
+        if (type === "number") {
+            // Mengubah string dari input menjadi tipe Number, menggunakan parseFloat agar bisa menerima desimal (untuk suku bunga)
+            finalValue = name === 'suku_bunga_diminta' ? parseFloat(value) : parseInt(value);
+            // Tambahkan guard clause jika input kosong
+            if (value === "") finalValue = 0;
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]: finalValue,
+        }));
+    };
+
+    const handleSaveApplication = async () => {
+        if (isSaving) return;
+
+        setIsSaving(true);
+        setSaveMessage(null);
+
+        const dataToSend = {
+            ...formData,
+        };
+
+        try {
+            console.log("Mengirim aplikasi baru ke backend:", dataToSend);
+
+            // Panggilan ke applicationsAPI.create
+            const result = await applicationsAPI.create(dataToSend);
+
+            // Asumsi applicationsAPI.create mengembalikan objek dengan data aplikasi yang dibuat
+            if (result && result.id) {
+                console.log("Aplikasi berhasil disimpan:", result);
+                setSaveMessage("Aplikasi baru berhasil disimpan!");
+
+                // Panggil callback onSaveSuccess untuk menutup modal atau me-refresh list
+                onSaveSuccess(result.id);
+            } else {
+                // Tangani kasus ketika API sukses tapi data tidak sesuai harapan
+                setSaveMessage("Aplikasi berhasil dikirim, tetapi respons tidak lengkap.");
+            }
+        } catch (error) {
+            console.error("Kesalahan saat menyimpan aplikasi:", error);
+            // Asumsi error adalah objek dari httpService yang memiliki pesan
+            const errorMessage = error.message || "Terjadi kesalahan jaringan atau server saat menyimpan.";
+            setSaveMessage(`Gagal menyimpan: ${errorMessage}`);
+        } finally {
+            setIsSaving(false);
+            // Hilangkan pesan setelah 4 detik kecuali ada error persisten
+            setTimeout(() => setSaveMessage(null), 4000);
+        }
+    };
+
+    const InputField = ({ id, label, type = "text", placeholder, step, min, isTextArea = false, options = null }) => {
+        const inputProps = {
+            id,
+            name: id,
+            // Menggunakan || 0 untuk number dan || "" untuk lainnya agar form tetap controlled
+            value: formData[id] !== undefined ? formData[id] : (type === "number" ? 0 : ""),
+            onChange: handleInputChange,
+            placeholder,
+            disabled: isDisabled || isSaving, // Nonaktifkan saat menyimpan
+            className: "w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition duration-150",
+        };
+
+        return (
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={id}>
+                    {label}
+                </label>
+                {isTextArea ? (
+                    <textarea {...inputProps} rows="2" />
+                ) : options ? (
+                    <select {...inputProps}>
+                        {options.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <input
+                        {...inputProps}
+                        type={type}
+                        step={step}
+                        min={min}
+                    />
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <div className="bg-white rounded-2xl p-6 border-gray-100">
+            <div className="flex justify-between items-start mb-6 border-b pb-4">
+                <div>
+                    <h3 className="text-xl font-bold text-gray-800">
+                        {isModal ? "Formulir Aplikasi Baru" : "Informasi Aplikasi Pinjaman"}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Lengkapi semua data yang diperlukan untuk mengajukan aplikasi pinjaman.
+                    </p>
+                </div>
+                {!isModal && (
+                    <span className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-medium border border-blue-200">
+                        {prefilledId ? 'Data Tersimpan' : 'Draft Baru'}
+                    </span>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                {/* --- Data Institusi --- */}
+                <h4 className="md:col-span-2 lg:col-span-3 text-md font-semibold text-gray-700 border-b pb-2 mb-2 pt-2">Data Institusi</h4>
+
+                <InputField id="nama_koperasi" label="Nama Koperasi/Institusi" placeholder="Masukkan nama koperasi" />
+                <InputField id="npwp_institusi" label="NPWP Institusi" placeholder="XX.XXX.XXX.X-XXX.XXX" />
+                <InputField id="nomor_nik_koperasi" label="Nomor NIK Koperasi" placeholder="NIK Koperasi" />
+
+                <InputField
+                    id="grade_koperasi"
+                    label="Grade Koperasi"
+                    type="select"
+                    options={[
+                        { value: 'A', label: 'A' },
+                        { value: 'B', label: 'B' },
+                        { value: 'C', label: 'C' },
+                        { value: 'D', label: 'D' },
+                    ]}
+                />
+                <InputField id="kota_domisili" label="Kota Domisili" placeholder="Masukkan kota domisili" />
+                <InputField
+                    id="tipe_sektor"
+                    label="Tipe Sektor"
+                    type="select"
+                    options={[
+                        { value: 'SEKTOR_RIIL', label: 'SEKTOR_RIIL' },
+                        { value: 'JASA', label: 'JASA' },
+                        { value: 'PERDAGANGAN', label: 'PERDAGANGAN' },
+                        { value: 'LAINNYA', label: 'LAINNYA' },
+                    ]}
+                />
+
+                {/* --- Data Proposal Pembiayaan --- */}
+                <h4 className="md:col-span-2 lg:col-span-3 text-md font-semibold text-gray-700 border-b pt-6 pb-2 mb-2 mt-4">Data Proposal Pembiayaan</h4>
+
+                <InputField id="nomor_proposal_internal" label="Nomor Proposal Internal" placeholder="Contoh: PROP/2025/001" />
+                <InputField id="tanggal_proposal" label="Tanggal Proposal" type="date" />
+                <InputField id="jumlah_pembiayaan_diajukan" label="Jumlah Pembiayaan Diajukan (Rp)" type="number" min="0" placeholder="0" />
+                <InputField id="suku_bunga_diminta" label="Suku Bunga Diminta (%)" type="number" step="0.1" min="0" placeholder="0.0" />
+                <InputField id="tenor_diminta_bulan" label="Tenor Diminta (Bulan)" type="number" min="1" placeholder="0" />
+
+                <div className="md:col-span-2 lg:col-span-3">
+                    <InputField
+                        id="tujuan_pembiayaan"
+                        label="Tujuan Pembiayaan"
+                        placeholder="Jelaskan tujuan pembiayaan (misalnya: modal kerja, investasi, dll.)"
+                        isTextArea={true}
+                    />
+                </div>
+            </div>
+
+            {/* Tombol Simpan (Hanya tampil jika isModal = true) */}
+            {isModal && (
+                <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end items-center">
+                    {/* Pesan Konfirmasi Simpan */}
+                    {saveMessage && (
+                        <div className={`mr-4 mb-3 sm:mb-0 p-3 text-sm font-semibold rounded-xl transition-opacity duration-300 ${saveMessage.includes("berhasil") ? "text-green-700 bg-green-100 border border-green-200" : "text-red-700 bg-red-100 border border-red-200"
+                            }`}>
+                            {saveMessage}
+                        </div>
+                    )}
+                    <button
+                        onClick={handleSaveApplication}
+                        disabled={isSaving}
+                        className="flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/50 w-full sm:w-auto justify-center disabled:bg-blue-400 disabled:cursor-not-allowed"
+                    >
+                        {isSaving ? (
+                            <>
+                                <i className="fas fa-spinner fa-spin -ml-1 mr-3 h-5 w-5"></i>
+                                Menyimpan...
+                            </>
+                        ) : (
+                            <>
+                                <i className="fas fa-save mr-2"></i>
+                                Simpan Aplikasi
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
         </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            ID Aplikasi
-          </label>
-          <input
-            type="text"
-            name="applicationId"
-            value={formData.applicationId}
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 font-mono"
-            readOnly
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nama Perusahaan/Pemohon
-          </label>
-          <input
-            type="text"
-            name="companyName"
-            value={formData.companyName}
-            onChange={handleInputChange}
-            placeholder="Masukkan nama perusahaan/pemohon"
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Jenis Usaha
-          </label>
-          <select
-            name="businessType"
-            value={formData.businessType}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Pilih jenis usaha</option>
-            <option value="Perdagangan">Perdagangan</option>
-            <option value="Manufaktur">Manufaktur</option>
-            <option value="Jasa">Jasa</option>
-            <option value="Pertanian">Pertanian</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Sektor
-          </label>
-          <select
-            name="sector"
-            value={formData.sector}
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Pilih sektor</option>
-            <option value="Mikro">Mikro</option>
-            <option value="Kecil">Kecil</option>
-            <option value="Menengah">Menengah</option>
-          </select>
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Alamat
-          </label>
-          <textarea
-            rows="2"
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-            placeholder="Masukkan alamat lengkap"
-            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          ></textarea>
-        </div>
-
-        <div className="md:col-span-2 flex justify-end mt-4">
-          <button className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition font-medium">
-            Simpan & Lanjutkan
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ApplicationInfo;

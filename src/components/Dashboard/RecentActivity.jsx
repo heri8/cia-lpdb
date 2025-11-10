@@ -3,35 +3,11 @@ import { useApi } from "../../hooks/useApi";
 import { dashboardAPI } from "../../services/api";
 
 const RecentActivity = () => {
-  //     const {
-  //     data: activities,
-  //     loading,
-  //     error
-  //   } = useApi(dashboardAPI.getRecentActivity);
-
-  // TODO: dihapus ketika api backend sudah ada
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const activities = [
-    {
-      id: 101,
-      title: "Aplikasi APL-2023-0012 diunggah",
-      type: "upload",
-      timestamp: "2024-11-12T14:30:00Z",
-    },
-    {
-      id: 102,
-      title: "Skoring selesai untuk APL-2023-0011",
-      type: "scoring",
-      timestamp: "2024-11-12T14:30:00Z",
-    },
-    {
-      id: 103,
-      title: "Analisis LLM dilakukan untuk 5 aplikasi",
-      type: "llm",
-      timestamp: "2024-11-12T14:30:00Z",
-    },
-  ];
+      const {
+      data: activities,
+      loading,
+      error
+    } = useApi(dashboardAPI.getRecentActivity);
 
   const timeSince = (timestamp) => {
     const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);

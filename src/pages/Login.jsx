@@ -21,7 +21,7 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmitDummy = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -73,7 +73,7 @@ const Login = () => {
   };
 
   // TODO: digunakan jika api backend sudah siap
-  const handleSubmitBackup = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);

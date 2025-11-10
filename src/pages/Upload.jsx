@@ -18,44 +18,44 @@ const Upload = () => {
   const applicationId = "APL-2023-0015";
 
   // 1. Definisikan fungsi API yang akan dipanggil oleh useApi
-  // const fetchDocuments = useCallback(
-  //   () => documentsAPI.getUploadedDocuments(applicationId),
-  //   []
-  // );
+  const fetchDocuments = useCallback(
+    () => documentsAPI.getUploadedDocuments(applicationId),
+    []
+  );
 
-  // const fetchHistory = useCallback(
-  //   () => documentsAPI.getUploadHistory(applicationId),
-  //   []
-  // );
+  const fetchHistory = useCallback(
+    () => documentsAPI.getUploadHistory(applicationId),
+    []
+  );
 
   // 2. Panggil useApi untuk fetching data
-  // const {
-  //   data: uploadedDocuments,
-  //   loading: loadingDocuments,
-  //   error: errorDocuments,
-  //   refetch: refetchDocuments,
-  // } = useApi(fetchDocuments);
+  const {
+    data: uploadedDocuments,
+    loading: loadingDocuments,
+    error: errorDocuments,
+    refetch: refetchDocuments,
+  } = useApi(fetchDocuments);
 
-  // const {
-  //   data: uploadHistory,
-  //   loading: loadingHistory,
-  //   error: errorHistory,
-  //   refetch: refetchHistory,
-  // } = useApi(fetchHistory);
+  const {
+    data: uploadHistory,
+    loading: loadingHistory,
+    error: errorHistory,
+    refetch: refetchHistory,
+  } = useApi(fetchHistory);
 
   // 3. Gabungkan status loading dan error
-  // const isLoading = loadingDocuments || loadingHistory;
-  // const isError = errorDocuments || errorHistory;
-  const isLoading = false;
-  const isError = null;
+  const isLoading = loadingDocuments || loadingHistory;
+  const isError = errorDocuments || errorHistory;
+  // const isLoading = false;
+  // const isError = null;
 
   // 4. Handler untuk memuat ulang data setelah upload berhasil di DocumentUpload
   const handleUploadComplete = () => {
     // Refresh kedua data (dokumen dan history)
-    // refetchDocuments();
-    // refetchHistory();
+    refetchDocuments();
+    refetchHistory();
     // Opsional: Tampilkan notifikasi
-    // alert("Dokumen berhasil diunggah! Data sedang di-refresh.");
+    alert("Dokumen berhasil diunggah! Data sedang di-refresh.");
   };
 
   // --- Render Status ---
@@ -95,15 +95,13 @@ const Upload = () => {
 
         <DocumentUpload
           applicationId={applicationId}
-          // uploadedDocuments={uploadedDocuments || []}
-          uploadedDocuments={[]}
+          uploadedDocuments={uploadedDocuments || []}
           onUploadComplete={handleUploadComplete}
         />
 
         <UploadHistory
           applicationId={applicationId}
-          // history={uploadHistory || []}
-          history={[]}
+          history={uploadHistory || []}
         />
       </div>
     </div>

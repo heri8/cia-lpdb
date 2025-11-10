@@ -1,6 +1,4 @@
 import { lazy } from "react";
-import { dashboardAPI } from "../services/api";
-import { useApi } from "../contexts/ApiContext";
 
 const StatsCards = lazy(() => import("../components/Dashboard/StatsCards"));
 const RecentApplications = lazy(() =>
@@ -9,25 +7,13 @@ const RecentApplications = lazy(() =>
 const OTSRecommendations = lazy(() =>
   import("../components/Dashboard/OTSRecommendations")
 );
-const LLMAssistant = lazy(() => import("../components/Dashboard/LLMAssistant"));
+const LLMAssistant = lazy(() => import("../components/Dashboard/LLMAssistant")); // TODO: belum
 const SystemStatus = lazy(() => import("../components/Dashboard/SystemStatus"));
 const RecentActivity = lazy(() =>
   import("../components/Dashboard/RecentActivity")
 );
 
 const Dashboard = () => {
-
-  const {
-    data: applications,
-    loading,
-    error,
-    refetch,
-  } = useApi(dashboardAPI.healthCheck);
-
-  console.log('tes API: ');
-  
-
-  
   return (
     <div className="h-full overflow-auto">
       {/* Stats Cards Section */}

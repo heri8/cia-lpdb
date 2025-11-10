@@ -3,37 +3,37 @@ import { useApi } from "../../hooks/useApi";
 import { systemAPI } from "../../services/api";
 
 const SystemStatus = () => {
-  //     const {
-  //     data: systems,
-  //     loading,
-  //     error
-  //   } = useApi(systemAPI.getStatus);
+      const {
+      data: systems,
+      loading,
+      error
+    } = useApi(systemAPI.getStatus);
 
   // TODO: dihapus ketika api backend sudah ada
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const systems = [
-    {
-      name: "OCR Service",
-      status: "Normal",
-      type: "success",
-    },
-    {
-      name: "Scoring Engine",
-      status: "Normal",
-      type: "success",
-    },
-    {
-      name: "LLM Service",
-      status: "Load Tinggi",
-      type: "warning",
-    },
-    {
-      name: "Database",
-      status: "Normal",
-      type: "success",
-    },
-  ];
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState(false);
+  // const systems = [
+  //   {
+  //     name: "OCR Service",
+  //     status: "Normal",
+  //     type: "success",
+  //   },
+  //   {
+  //     name: "Scoring Engine",
+  //     status: "Normal",
+  //     type: "success",
+  //   },
+  //   {
+  //     name: "LLM Service",
+  //     status: "Load Tinggi",
+  //     type: "warning",
+  //   },
+  //   {
+  //     name: "Database",
+  //     status: "Normal",
+  //     type: "success",
+  //   },
+  // ];
 
   const getStatusClasses = (type) => {
     const classes = {

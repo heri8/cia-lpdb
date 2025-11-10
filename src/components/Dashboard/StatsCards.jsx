@@ -3,12 +3,8 @@ import { useApi } from "../../hooks/useApi";
 import { dashboardAPI } from "../../services/api";
 
 const StatsCards = () => {
-  // TODO: ketika api backend sudah siap
-  // const { data: apiData, loading, error } = useApi(dashboardAPI.getStats);
+  const { data: apiData, loading, error } = useApi(dashboardAPI.getStats);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  
   const getColorClasses = (color) => {
     const classes = {
       blue: {
@@ -101,47 +97,49 @@ const StatsCards = () => {
     ];
   };
 
-  // const stats = apiData ? formatStatsData(apiData) : [];
+  const stats = apiData ? formatStatsData(apiData) : [];
 
   // data dummy
-  const stats = [
-    {
-      title: "Total Aplikasi",
-      value: "142",
-      trend: "12% dari bulan lalu",
-      icon: "file-alt",
-      color: "blue",
-      progress: 100,
-      valueColor: "text-gray-800",
-    },
-    {
-      title: "Layak",
-      value: "78",
-      description: "≥80 skor",
-      icon: "check-circle",
-      color: "success",
-      progress: 55,
-      valueColor: "text-success",
-    },
-    {
-      title: "Layak Bersyarat",
-      value: "35",
-      description: "70-79.9 skor",
-      icon: "exclamation-circle",
-      color: "warning",
-      progress: 25,
-      valueColor: "text-warning",
-    },
-    {
-      title: "Tidak Layak",
-      value: "29",
-      description: "<60 skor",
-      icon: "times-circle",
-      color: "danger",
-      progress: 20,
-      valueColor: "text-danger",
-    },
-  ];
+  // const error = null;
+  // const loading = false;
+  // const stats = [
+  //   {
+  //     title: "Total Aplikasi",
+  //     value: "142",
+  //     trend: "12% dari bulan lalu",
+  //     icon: "file-alt",
+  //     color: "blue",
+  //     progress: 100,
+  //     valueColor: "text-gray-800",
+  //   },
+  //   {
+  //     title: "Layak",
+  //     value: "78",
+  //     description: "≥80 skor",
+  //     icon: "check-circle",
+  //     color: "success",
+  //     progress: 55,
+  //     valueColor: "text-success",
+  //   },
+  //   {
+  //     title: "Layak Bersyarat",
+  //     value: "35",
+  //     description: "70-79.9 skor",
+  //     icon: "exclamation-circle",
+  //     color: "warning",
+  //     progress: 25,
+  //     valueColor: "text-warning",
+  //   },
+  //   {
+  //     title: "Tidak Layak",
+  //     value: "29",
+  //     description: "<60 skor",
+  //     icon: "times-circle",
+  //     color: "danger",
+  //     progress: 20,
+  //     valueColor: "text-danger",
+  //   },
+  // ];
 
   if (loading) {
     return (

@@ -71,10 +71,7 @@ const LLMAssistant = () => {
 
     try {
       // 2. Panggil API (asumsi response memiliki field 'answer')
-      const response = await llmAPI.askQuestion(question, {
-        // Tambahkan konteks yang relevan
-        applicationId: "APL-2023-DASHBOARD",
-      });
+      const response = await llmAPI.askQuestion(question, {});
 
       // 3. Tambahkan balasan LLM ke riwayat
       const llmResponse = {
