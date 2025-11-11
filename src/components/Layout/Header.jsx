@@ -1,7 +1,10 @@
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Header = ({ onToggleSidebar, onLogout }) => {
   const location = useLocation();
+  const { user } = useAuth();
+    const adminName = user?.nama || "Admin";
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -11,6 +14,8 @@ const Header = ({ onToggleSidebar, onLogout }) => {
         return "Upload Dokumen";
       case "/applications":
         return "Daftar Aplikasi";
+      case "/customers":
+        return "Daftar Nasabah";
       case "/analytics":
         return "Analytics";
       case "/configuration":
@@ -30,6 +35,8 @@ const Header = ({ onToggleSidebar, onLogout }) => {
         return "Unggah dan proses dokumen aplikasi pinjaman";
       case "/applications":
         return "Kelola dan pantau aplikasi pinjaman";
+      case "/customers":
+        return "Kelola dan pantau data nasabah";
       case "/analytics":
         return "Analisis data dan laporan";
       case "/configuration":
@@ -95,7 +102,7 @@ const Header = ({ onToggleSidebar, onLogout }) => {
                 <i className="fas fa-user text-white text-xs"></i>
               </div>
               <span className="hidden sm:block text-sm font-medium text-gray-700">
-                Admin
+                {adminName}
               </span>
               <i className="fas fa-chevron-down text-gray-400 text-xs"></i>
             </button>
@@ -103,14 +110,14 @@ const Header = ({ onToggleSidebar, onLogout }) => {
             {/* Dropdown Menu */}
             <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-soft border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
               <div className="p-2">
-                <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                {/* <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
                   <i className="fas fa-user-circle mr-2 text-gray-400"></i>
                   Profile
                 </button>
                 <button className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
                   <i className="fas fa-cog mr-2 text-gray-400"></i>
                   Settings
-                </button>
+                </button> */}
                 <div className="border-t border-gray-200 my-1"></div>
                 <button
                   onClick={onLogout}

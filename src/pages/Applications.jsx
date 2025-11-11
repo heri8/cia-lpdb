@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { applicationsAPI } from "../services/api";
 import { useApi } from "../hooks/useApi";
 import ApplicationInfo from "../components/Upload/ApplicationInfo";
 import Modal from "../components/Application/Modal";
 import { useNavigate } from "react-router-dom";
+import moment from "moment";
 
 const mockApplications = [
     {
@@ -149,112 +150,264 @@ const mockApplications = [
     },
 ];
 
+const getStatusClass = (status) => {
+    const normalizedStatus = status?.toUpperCase();
+    const classes = {
+        BARU: "bg-blue-100 text-blue-800",
+        DRAFT: "bg-gray-100 text-gray-800",
+        LAYAK: "bg-green-100 text-green-800",
+        BERSYARAT: "bg-yellow-100 text-yellow-800",
+        TIDAK_LAYAK: "bg-red-100 text-red-800",
+    };
+
+    if (normalizedStatus?.includes("LAYAK BERSYARAT")) return classes.BERSYARAT;
+    if (normalizedStatus?.includes("LAYAK")) return classes.LAYAK;
+    if (normalizedStatus?.includes("TIDAK LAYAK")) return classes.TIDAK_LAYAK;
+    if (normalizedStatus === "BARU") return classes.BARU;
+
+    // Default untuk status lain
+    return classes.DRAFT;
+};
+
+// Fungsi untuk menentukan kelas warna Progress Bar Skor
+const getProgressColor = (score) => {
+    if (score === null || score === undefined) return "bg-gray-300"; // Jika skor null/belum dinilai
+    if (score >= 80) return "bg-success";
+    if (score >= 70) return "bg-warning";
+    return "bg-danger";
+};
+
 const Applications = () => {
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterColor, setFilterColor] = useState("all");
-
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
-
+    const [statusFilter, setStatusFilter] = useState("");
+    const pageSize = 10;
+    const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // const { data: applications, loading, error } = useApi(
-    //     applicationsAPI.getAll,
-    //     [filterColor, searchTerm]
-    // );
+    // const applications = mockApplications;
+    // const loading = false;
+    // const error = null;
 
-    const applications = mockApplications;
-    const loading = false;
-    const error = null;
-
-    const handleUploadClick = (applicationId) => {
-        // Arahkan ke halaman Upload dan kirim ID Aplikasi melalui state
-        navigate("/upload", { state: { applicationId } });
-    };
-
-    const getStatusColorFromStatus = (status) => {
-        if (status.includes("Disetujui")) return "green";
-        if (status.includes("Diproses")) return "blue";
-        if (status.includes("Bersyarat")) return "yellow";
-        if (status.includes("Tidak Layak")) return "red";
-        return "gray";
-    };
-
-    const getStatusClass = (color) => {
-        const classes = {
-            green: "bg-green-100 text-green-800",
-            yellow: "bg-yellow-100 text-yellow-800",
-            red: "bg-red-100 text-red-800",
-            blue: "bg-blue-100 text-blue-800",
-            gray: "bg-gray-100 text-gray-700",
+    const fetchApplications = useCallback(() => {
+        const params = {
+            page: currentPage,
+            limit: pageSize,
+            status: statusFilter,
+            search: searchTerm,
         };
-        return classes[color] || classes.gray;
-    };
+        return applicationsAPI.getAll(params);
+    }, [currentPage, statusFilter, searchTerm]);
 
-    const getProgressColor = (score) => {
-        if (score >= 80) return "bg-success";
-        if (score >= 70) return "bg-warning";
-        return "bg-danger";
-    };
+    const { data, loading, error, refetch } = useApi(fetchApplications);
 
-    const { paginatedApplications, totalPages, totalFilteredItems } =
-        useMemo(() => {
-            let filtered = applications.map((app) => ({
-                ...app,
-                statusColor: getStatusColorFromStatus(app.status),
-            }));
+    const applications = data?.items || [];
+    const totalItems = data?.total_items || 0;
+    const totalPages = data?.total_pages || 0;
 
-            // 1. Filter by Status Color
-            if (filterColor !== "all") {
-                filtered = filtered.filter((app) => app.statusColor === filterColor);
-            }
+    const fromItem = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+    const toItem = Math.min(currentPage * pageSize, totalItems);
 
-            // 2. Filter by Search Term
-            if (searchTerm) {
-                const lowerCaseSearch = searchTerm.toLowerCase();
-                filtered = filtered.filter(
-                    (app) =>
-                        app.name.toLowerCase().includes(lowerCaseSearch) ||
-                        app.id.toLowerCase().includes(lowerCaseSearch)
-                );
-            }
-
-            // 💡 Hitung total item yang difilter dan total halaman
-            const totalFilteredItems = filtered.length;
-            const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
-
-            // Pastikan halaman saat ini valid
-            if (currentPage > totalPages && totalPages > 0) {
-                // Jika halaman saat ini tidak valid, reset ke halaman terakhir.
-                // Catatan: Dalam kode nyata, Anda mungkin ingin menggunakan setState di luar useMemo,
-                // namun untuk menyederhanakan, kita asumsikan state telah diperbarui atau kita hanya menghitung ulang.
-            }
-
-            // 💡 Logika Pagination: Menentukan indeks awal dan akhir
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-
-            // Memotong array hasil filter untuk mendapatkan data halaman saat ini
-            const paginatedApplications = filtered.slice(startIndex, endIndex);
-
-            return { paginatedApplications, totalPages, totalFilteredItems };
-        }, [applications, filterColor, searchTerm, currentPage, itemsPerPage]);
-
-    // --- Utility untuk Pagination UI ---
-    const handlePageChange = (page) => {
-        if (page >= 1 && page <= totalPages) {
-            setCurrentPage(page);
+    const handlePreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
         }
     };
 
-    const pageNumbers = [];
-    for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
-    }
+    const handleNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage((prev) => prev + 1);
+        }
+    };
+
+    const handleViewDetail = (applicationId) => {
+        navigate(`/applications/${applicationId}`);
+    };
+
+    const handleUploadDoc = (applicationId) => {
+        navigate(`/upload/${applicationId}`);
+    };
+
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <div className="p-6 text-center text-blue-500">
+                    <i className="fas fa-spinner fa-spin mr-2"></i> Memuat data aplikasi...
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="p-6 text-center text-red-600 bg-red-50 border border-red-200 rounded-xl">
+                    <i className="fas fa-exclamation-triangle mr-2"></i> Terjadi kesalahan saat mengambil data.
+                    <p className="text-sm mt-1">{error.toString()}</p>
+                    <button
+                        onClick={refetch}
+                        className="ml-4 text-sm font-medium underline mt-2"
+                    >
+                        Coba Lagi
+                    </button>
+                </div>
+            );
+        }
+
+        if (applications.length === 0) {
+            return (
+                <div className="p-10 text-center text-gray-500">
+                    <i className="fas fa-inbox fa-3x mb-3 text-gray-300"></i>
+                    <p className="text-lg font-semibold">Tidak ada data aplikasi yang ditemukan.</p>
+                    <p className="text-sm">Coba ubah filter atau tambah aplikasi baru.</p>
+                </div>
+            );
+        }
+
+        // 6. Render Table
+        return (
+            <>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                {/* 1. ID */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ID
+                                </th>
+                                {/* 2. Nomor Proposal */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    No. Proposal
+                                </th>
+                                {/* 3. Tgl. Proposal (Mengganti Tgl. Pengajuan) */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tgl. Proposal
+                                </th>
+                                {/* 4. Nama Nasabah (Mengganti Nama Perusahaan) */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Nama Nasabah
+                                </th>
+                                {/* 5. Skor Final (Mengganti Skor) */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Skor Final
+                                </th>
+                                {/* 6. Status Pengajuan (Mengganti Status) */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status Pengajuan
+                                </th>
+                                {/* 7. Aksi */}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Aksi
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {applications.map((app) => (
+                                <tr key={app.id} className="hover:bg-gray-50 transition">
+                                    {/* Kolom 1: ID Aplikasi */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="font-medium text-gray-900">{app.id}</p>
+                                    </td>
+
+                                    {/* Kolom 2: Nomor Proposal Internal */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="text-sm text-gray-900">
+                                            {app.nomor_proposal_internal || '-'}
+                                        </p>
+                                    </td>
+
+                                    {/* Kolom 3: Tanggal Proposal */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="text-sm text-gray-500">
+                                            {app.tanggal_proposal ? moment(app.tanggal_proposal).format('DD MMM YYYY') : '-'}
+                                        </p>
+                                    </td>
+
+                                    {/* Kolom 4: Nama Nasabah */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="text-gray-900">{app.nama_nasabah}</p>
+                                    </td>
+
+                                    {/* Kolom 5: Skor Final */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                            <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
+                                                <div
+                                                    className={`h-2 rounded-full ${getProgressColor(
+                                                        app.skor_final
+                                                    )}`}
+                                                    style={{ width: `${app.skor_final || 0}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className="font-medium">{app.skor_final !== null ? app.skor_final : 'N/A'}</span>
+                                        </div>
+                                    </td>
+
+                                    {/* Kolom 6: Status Pengajuan */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            className={`px-3 py-1 text-xs rounded-full ${getStatusClass(
+                                                app.status_pengajuan
+                                            )} font-medium`}
+                                        >
+                                            {app.status_pengajuan}
+                                        </span>
+                                    </td>
+
+                                    {/* Kolom 7: Aksi */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex space-x-2">
+                                            {/* <button
+                                                onClick={() => handleViewDetail(app.id)}
+                                                className="text-primary-600 hover:text-primary-700 p-1 rounded"
+                                                title="Lihat Detail"
+                                            >
+                                                <i className="fas fa-eye"></i>
+                                            </button> */}
+                                            <button
+                                                onClick={() => handleUploadDoc(app.id)}
+                                                className="text-gray-500 hover:text-gray-700 p-1 rounded"
+                                                title="Upload Dokumen"
+                                            >
+                                                <i className="fas fa-cloud-upload-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Kontrol Pagination (Tidak Berubah) */}
+                <div className="px-6 py-3 flex justify-between items-center border-t border-gray-200 bg-white">
+                    <p className="text-sm text-gray-700">
+                        Menampilkan <span className="font-medium">{fromItem}</span> sampai <span className="font-medium">{toItem}</span> dari <span className="font-medium">{totalItems}</span> hasil
+                    </p>
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={handlePreviousPage}
+                            disabled={currentPage === 1 || loading}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            <i className="fas fa-chevron-left mr-2"></i> Sebelumnya
+                        </button>
+                        <button
+                            onClick={handleNextPage}
+                            disabled={currentPage >= totalPages || totalPages === 0 || loading}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            Selanjutnya <i className="fas fa-chevron-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </>
+        );
+    };
 
     const openModal = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        refetch();
+    };
 
     if (loading) {
         return (
@@ -276,202 +429,49 @@ const Applications = () => {
     return (
         <div className="p-4 lg:p-6">
             <div className="bg-white rounded-2xl shadow-soft p-4 lg:p-6 border border-gray-100">
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-800 mb-2">
-                    Daftar Aplikasi Pinjaman
+                <h1 className="text-xl lg:text-2xl font-bold text-gray-800 mb-6">
+                    Daftar Aplikasi
                 </h1>
-                <p className="text-gray-500 mb-6">
-                    Kelola dan pantau semua aplikasi pinjaman yang telah didaftarkan.
-                </p>
 
-                {/* Controls Section (Search & Filter) */}
+                {/* Filter dan Search Bar */}
                 <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
-                    <div className="relative w-full md:w-1/3">
-                        <input
-                            type="text"
-                            placeholder="Cari ID Aplikasi atau Nama Perusahaan..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        />
-                        <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-
-                    <div className="flex space-x-3 w-full md:w-auto">
-                        <select
-                            value={filterColor}
-                            onChange={(e) => setFilterColor(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-700"
-                        >
-                            <option value="all">Semua Status</option>
-                            <option value="green">Layak (Disetujui)</option>
-                            <option value="blue">Layak (Diproses)</option>
-                            <option value="yellow">Layak Bersyarat</option>
-                            <option value="red">Tidak Layak</option>
-                            <option value="gray">Pending Review/Lainnya</option>
-                        </select>
-                        <button
-                            onClick={openModal}
-                            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition text-sm font-medium"
-                        >
-                            <i className="fas fa-plus mr-2"></i> Aplikasi Baru
-                        </button>
-                    </div>
+                    <input
+                        type="text"
+                        placeholder="Cari ID Aplikasi, Nama Perusahaan..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1); // Reset page
+                        }}
+                        className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => {
+                            setStatusFilter(e.target.value);
+                            setCurrentPage(1); // Reset page
+                        }}
+                        className="w-full md:w-1/6 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="">Semua Status</option>
+                        <option value="Layak">Layak</option>
+                        <option value="Layak Bersyarat">Layak Bersyarat</option>
+                        <option value="Tidak Layak">Tidak Layak</option>
+                        <option value="Draft">Draft</option>
+                    </select>
+                    <button
+                        onClick={openModal}
+                        className="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition font-medium">
+                        <i className="fas fa-plus mr-2"></i> Aplikasi Baru
+                    </button>
                 </div>
 
-                {/* Data Table */}
-                <div className="overflow-x-auto rounded-xl border border-gray-200">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                                    ID Aplikasi
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
-                                    Nama Perusahaan
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tgl Pengajuan
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Skor Kredit
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Aksi
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {(applications ?? []).length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                                        Tidak ada data aplikasi yang ditemukan.
-                                    </td>
-                                </tr>
-                            ) : (
-                                applications.map((app) => (
-                                    <tr key={app.id} className="hover:bg-gray-50 transition">
-                                        <td className="px-6 py-4 font-medium text-gray-900">
-                                            {app.id}
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-900">{app.name}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center">
-                                                <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
-                                                    <div
-                                                        className={`h-2 rounded-full ${getProgressColor(
-                                                            app.score
-                                                        )}`}
-                                                        style={{ width: `${app.score}%` }}
-                                                    ></div>
-                                                </div>
-                                                <span className="font-medium">{app.score}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span
-                                                className={`px-3 py-1 text-xs rounded-full ${getStatusClass(
-                                                    app.statusColor
-                                                )} font-medium`}
-                                            >
-                                                {app.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex space-x-2">
-                                                <button className="text-primary-600 hover:text-primary-700 p-1 rounded">
-                                                    <i className="fas fa-eye"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex space-x-2">
-                                                <button className="text-primary-600 hover:text-primary-700 p-1 rounded">
-                                                    <i className="fas fa-eye"></i>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleUploadClick(app.id)}
-                                                    className="text-cyan-600 hover:text-cyan-700 p-1 rounded"
-                                                    title="Unggah Dokumen"
-                                                >
-                                                    <i className="fas fa-upload"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination Controls */}
-                <div className="mt-4 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-600">
-                    <div className="mb-2 sm:mb-0">
-                        <p>
-                            Menampilkan {(currentPage - 1) * itemsPerPage + 1} sampai{" "}
-                            <span className="font-semibold">
-                                {Math.min(currentPage * itemsPerPage, totalFilteredItems)}
-                            </span>{" "}
-                            dari total{" "}
-                            <span className="font-semibold">{totalFilteredItems}</span>{" "}
-                            aplikasi
-                            {totalFilteredItems !== applications.length &&
-                                ` (total data: ${applications.length})`}
-                        </p>
-                    </div>
-
-                    <div className="flex space-x-1 items-center">
-                        {/* Items Per Page Selector */}
-                        <select
-                            value={itemsPerPage}
-                            onChange={(e) => {
-                                setItemsPerPage(Number(e.target.value));
-                                setCurrentPage(1); // Reset ke halaman 1 saat mengubah items per page
-                            }}
-                            className="px-2 py-1 border border-gray-300 rounded-lg text-xs"
-                        >
-                            <option value="5">5/halaman</option>
-                            <option value="10">10/halaman</option>
-                            <option value="20">20/halaman</option>
-                        </select>
-
-                        {/* Previous Button */}
-                        <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 disabled:opacity-50 hover:bg-gray-50 transition"
-                        >
-                            <i className="fas fa-chevron-left text-xs"></i>
-                        </button>
-
-                        {/* Page Number Buttons (Disederhanakan) */}
-                        {pageNumbers.map((page) => (
-                            <button
-                                key={page}
-                                onClick={() => handlePageChange(page)}
-                                className={`px-3 py-1 rounded-lg font-medium text-xs transition ${currentPage === page
-                                    ? "bg-blue-500 text-white"
-                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                    }`}
-                            >
-                                {page}
-                            </button>
-                        ))}
-
-                        {/* Next Button */}
-                        <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages || totalPages === 0}
-                            className="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 disabled:opacity-50 hover:bg-gray-50 transition"
-                        >
-                            <i className="fas fa-chevron-right text-xs"></i>
-                        </button>
-                    </div>
+                {/* Konten Table (Hasil renderContent) */}
+                <div className="rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                    {renderContent()}
                 </div>
             </div>
+
             <Modal
                 isOpen={isModalOpen}
                 onClose={closeModal}

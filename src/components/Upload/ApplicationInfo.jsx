@@ -1,7 +1,46 @@
 import { useEffect, useState } from "react";
 import { applicationsAPI } from "../../services/api";
 
-const ApplicationInfo = ({ isModal = false, prefilledId = null }) => {
+const InputField = ({ id, label, type = "text", placeholder, step, min, isTextArea = false, options = null, isDisabled, isSaving, formData, handleInputChange }) => {
+    const inputProps = {
+        id,
+        name: id,
+        // Menggunakan || 0 untuk number dan || "" untuk lainnya agar form tetap controlled
+        value: formData[id] !== undefined ? formData[id] : (type === "number" ? 0 : ""),
+        onChange: handleInputChange,
+        placeholder,
+        disabled: isDisabled || isSaving,
+        className: "w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition duration-150",
+    };
+
+    return (
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={id}>
+                {label}
+            </label>
+            {isTextArea ? (
+                <textarea {...inputProps} rows="2" />
+            ) : options ? (
+                <select {...inputProps}>
+                    {options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </option>
+                    ))}
+                </select>
+            ) : (
+                <input
+                    {...inputProps}
+                    type={type}
+                    step={step}
+                    min={min}
+                />
+            )}
+        </div>
+    );
+};
+
+const ApplicationInfo = ({ isModal = false, prefilledId = null, onSaveSuccess = () => { } }) => {
     const [formData, setFormData] = useState({
         // Data Institusi
         nama_koperasi: "",
@@ -26,6 +65,7 @@ const ApplicationInfo = ({ isModal = false, prefilledId = null }) => {
     useEffect(() => {
         if (prefilledId) {
             setFormData((prev) => ({ ...prev, applicationId: prefilledId }));
+            // 💡 TODO: Lakukan fetch data aplikasi yang ada di sini
         }
     }, [prefilledId]);
 
@@ -88,47 +128,9 @@ const ApplicationInfo = ({ isModal = false, prefilledId = null }) => {
         }
     };
 
-    const InputField = ({ id, label, type = "text", placeholder, step, min, isTextArea = false, options = null }) => {
-        const inputProps = {
-            id,
-            name: id,
-            // Menggunakan || 0 untuk number dan || "" untuk lainnya agar form tetap controlled
-            value: formData[id] !== undefined ? formData[id] : (type === "number" ? 0 : ""),
-            onChange: handleInputChange,
-            placeholder,
-            disabled: isDisabled || isSaving, // Nonaktifkan saat menyimpan
-            className: "w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition duration-150",
-        };
-
-        return (
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor={id}>
-                    {label}
-                </label>
-                {isTextArea ? (
-                    <textarea {...inputProps} rows="2" />
-                ) : options ? (
-                    <select {...inputProps}>
-                        {options.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </option>
-                        ))}
-                    </select>
-                ) : (
-                    <input
-                        {...inputProps}
-                        type={type}
-                        step={step}
-                        min={min}
-                    />
-                )}
-            </div>
-        );
-    };
-
     return (
         <div className="bg-white rounded-2xl p-6 border-gray-100">
+            {/* Header dan Info... */}
             <div className="flex justify-between items-start mb-6 border-b pb-4">
                 <div>
                     <h3 className="text-xl font-bold text-gray-800">
@@ -150,42 +152,102 @@ const ApplicationInfo = ({ isModal = false, prefilledId = null }) => {
                 {/* --- Data Institusi --- */}
                 <h4 className="md:col-span-2 lg:col-span-3 text-md font-semibold text-gray-700 border-b pb-2 mb-2 pt-2">Data Institusi</h4>
 
-                <InputField id="nama_koperasi" label="Nama Koperasi/Institusi" placeholder="Masukkan nama koperasi" />
-                <InputField id="npwp_institusi" label="NPWP Institusi" placeholder="XX.XXX.XXX.X-XXX.XXX" />
-                <InputField id="nomor_nik_koperasi" label="Nomor NIK Koperasi" placeholder="NIK Koperasi" />
+                {/* NOTE: Semua pemanggilan InputField di bawah kini menerima semua state dan handler yang diperlukan dari parent */}
+                <InputField
+                    id="nama_koperasi"
+                    label="Nama Koperasi/Institusi"
+                    placeholder="Masukkan nama koperasi"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
+                <InputField
+                    id="npwp_institusi"
+                    label="NPWP Institusi"
+                    placeholder="XX.XXX.XXX.X-XXX.XXX"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
+                <InputField
+                    id="nomor_nik_koperasi"
+                    label="Nomor NIK Koperasi"
+                    placeholder="NIK Koperasi"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
 
                 <InputField
                     id="grade_koperasi"
                     label="Grade Koperasi"
-                    type="select"
                     options={[
                         { value: 'A', label: 'A' },
                         { value: 'B', label: 'B' },
                         { value: 'C', label: 'C' },
                         { value: 'D', label: 'D' },
                     ]}
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
                 />
-                <InputField id="kota_domisili" label="Kota Domisili" placeholder="Masukkan kota domisili" />
+                <InputField
+                    id="kota_domisili"
+                    label="Kota Domisili"
+                    placeholder="Masukkan kota domisili"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
                 <InputField
                     id="tipe_sektor"
                     label="Tipe Sektor"
-                    type="select"
                     options={[
                         { value: 'SEKTOR_RIIL', label: 'SEKTOR_RIIL' },
                         { value: 'JASA', label: 'JASA' },
                         { value: 'PERDAGANGAN', label: 'PERDAGANGAN' },
                         { value: 'LAINNYA', label: 'LAINNYA' },
                     ]}
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
                 />
 
                 {/* --- Data Proposal Pembiayaan --- */}
                 <h4 className="md:col-span-2 lg:col-span-3 text-md font-semibold text-gray-700 border-b pt-6 pb-2 mb-2 mt-4">Data Proposal Pembiayaan</h4>
 
-                <InputField id="nomor_proposal_internal" label="Nomor Proposal Internal" placeholder="Contoh: PROP/2025/001" />
-                <InputField id="tanggal_proposal" label="Tanggal Proposal" type="date" />
-                <InputField id="jumlah_pembiayaan_diajukan" label="Jumlah Pembiayaan Diajukan (Rp)" type="number" min="0" placeholder="0" />
-                <InputField id="suku_bunga_diminta" label="Suku Bunga Diminta (%)" type="number" step="0.1" min="0" placeholder="0.0" />
-                <InputField id="tenor_diminta_bulan" label="Tenor Diminta (Bulan)" type="number" min="1" placeholder="0" />
+                <InputField
+                    id="nomor_proposal_internal"
+                    label="Nomor Proposal Internal"
+                    placeholder="Contoh: PROP/2025/001"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
+                <InputField
+                    id="tanggal_proposal"
+                    label="Tanggal Proposal"
+                    type="date"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
+                <InputField
+                    id="jumlah_pembiayaan_diajukan"
+                    label="Jumlah Pembiayaan Diajukan (Rp)"
+                    type="number" min="0"
+                    placeholder="0"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
+                <InputField
+                    id="suku_bunga_diminta"
+                    label="Suku Bunga Diminta (%)"
+                    type="number" step="0.1" min="0"
+                    placeholder="0.0"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
+                <InputField
+                    id="tenor_diminta_bulan"
+                    label="Tenor Diminta (Bulan)"
+                    type="number" min="1"
+                    placeholder="0"
+                    formData={formData} handleInputChange={handleInputChange}
+                    isDisabled={isDisabled} isSaving={isSaving}
+                />
 
                 <div className="md:col-span-2 lg:col-span-3">
                     <InputField
@@ -193,11 +255,13 @@ const ApplicationInfo = ({ isModal = false, prefilledId = null }) => {
                         label="Tujuan Pembiayaan"
                         placeholder="Jelaskan tujuan pembiayaan (misalnya: modal kerja, investasi, dll.)"
                         isTextArea={true}
+                        formData={formData} handleInputChange={handleInputChange}
+                        isDisabled={isDisabled} isSaving={isSaving}
                     />
                 </div>
             </div>
 
-            {/* Tombol Simpan (Hanya tampil jika isModal = true) */}
+            {/* Tombol Simpan */}
             {isModal && (
                 <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end items-center">
                     {/* Pesan Konfirmasi Simpan */}

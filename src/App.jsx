@@ -14,10 +14,13 @@ const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Upload = lazy(() => import("./pages/Upload"));
 const Applications = lazy(() => import("./pages/Applications"));
+const ApplicationDetail = lazy(() => import("./pages/ApplicationDetail"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Configuration = lazy(() => import("./pages/Configuration"));
 const Admin = lazy(() => import("./pages/Admin"));
 const RoleRouteGuard = lazy(() => import("./components/Auth/RoleRouteGuard"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
 
 const ApiConfiguration = lazy(() => import("./pages/ApiConfiguration"));
 
@@ -78,7 +81,7 @@ const AppRouter = () => {
                 />
 
                 <Route
-                  path="/upload"
+                  path="/upload/:id"
                   element={
                     <RoleRouteGuard
                       requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.ANALYST]}
@@ -134,6 +137,51 @@ const AppRouter = () => {
                       ]}
                     >
                       <Applications />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/applications/:id"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[
+                        USER_ROLES.ADMIN,
+                        USER_ROLES.ANALYST,
+                        USER_ROLES.REVIEWER,
+                      ]}
+                    >
+                      <ApplicationDetail />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/customers"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[
+                        USER_ROLES.ADMIN,
+                        USER_ROLES.ANALYST,
+                        USER_ROLES.REVIEWER,
+                      ]}
+                    >
+                      <Customers />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/customers/:id"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[
+                        USER_ROLES.ADMIN,
+                        USER_ROLES.ANALYST,
+                        USER_ROLES.REVIEWER,
+                      ]}
+                    >
+                      <CustomerDetail />
                     </RoleRouteGuard>
                   }
                 />

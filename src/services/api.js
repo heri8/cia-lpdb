@@ -63,8 +63,8 @@ export const documentsAPI = {
 
 // Analytics API
 export const analyticsAPI = {
-  getDashboardAnalytics: () => httpService.get("/analytics/dashboard"), 
-  
+  getDashboardAnalytics: () => httpService.get("/analytics/dashboard"),
+
   getApplicationTrends: (period) =>
     httpService.get("/analytics/trends", { params: { period } }),
 
@@ -83,6 +83,13 @@ export const systemAPI = {
   getStatus: () => httpService.get("/system/status"),
 
   checkHealth: () => httpService.get("/health"),
+};
+
+// Customers API
+export const customersAPI = {
+  getAll: (params) => httpService.get("/nasabah", { params }),
+
+  getById: (id) => httpService.get(`/nasabah/${id}`),
 };
 
 // LLM Assistant API
@@ -116,4 +123,5 @@ export default {
   system: systemAPI,
   llm: llmAPI,
   admin: adminAPI,
+  customers: customersAPI
 };

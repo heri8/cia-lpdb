@@ -4,12 +4,16 @@ import { useAuth, USER_ROLES } from "../../contexts/AuthContext";
 
 const Sidebar = ({ isOpen, onClose, onLogout }) => {
   const location = useLocation();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
+
+  const adminName = user?.nama || "Admin User";
+  const adminRole = user?.role || "Administrator";
 
   const allMenuItems = [
     { path: "/dashboard", icon: "chart-pie", label: "Dashboard", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST, USER_ROLES.REVIEWER] },
-    { path: "/upload", icon: "file-upload", label: "Upload Dokumen", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST] },
+    // { path: "/upload", icon: "file-upload", label: "Upload Dokumen", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST] },
     { path: "/applications", icon: "list", label: "Daftar Aplikasi", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST, USER_ROLES.REVIEWER] },
+    { path: "/customers", icon: "list", label: "Daftar Nasabah", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST, USER_ROLES.REVIEWER] },
     { path: "/analytics", icon: "chart-bar", label: "Analytics", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST] },
     { path: "/configuration", icon: "cog", label: "Konfigurasi", roles: [USER_ROLES.ADMIN] }, // Hanya Admin
     { path: '/api-configuration', icon: 'server', label: 'API Config', roles: [USER_ROLES.ADMIN] }, // Jika ini diaktifkan
@@ -67,16 +71,14 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
                 key={item.path}
                 to={item.path}
                 onClick={handleLinkClick}
-                className={`flex items-center px-4 py-3 rounded-xl transition ${
-                  isActive
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-300 hover:bg-gray-800"
-                }`}
+                className={`flex items-center px-4 py-3 rounded-xl transition ${isActive
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-300 hover:bg-gray-800"
+                  }`}
               >
                 <i
-                  className={`fas fa-${item.icon} w-5 text-center mr-3 ${
-                    isActive ? "text-blue-400" : ""
-                  }`}
+                  className={`fas fa-${item.icon} w-5 text-center mr-3 ${isActive ? "text-blue-400" : ""
+                    }`}
                 ></i>
                 <span className={`${isActive ? "font-medium" : ""}`}>
                   {item.label}
@@ -93,8 +95,10 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
               <i className="fas fa-user text-white text-sm"></i>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium">Admin User</p>
-              <p className="text-xs text-gray-400">Analis Senior</p>
+              <p className="text-sm font-medium" title={adminName}>
+                {adminName}
+              </p>
+              <p className="text-xs text-gray-400">{adminRole}</p>
             </div>
           </div>
 
