@@ -46,13 +46,12 @@ const ApplicationInfo = ({ isModal = false, prefilledId = null, onSaveSuccess = 
         nama_koperasi: "",
         npwp_institusi: "",
         nomor_nik_koperasi: "",
-        grade_koperasi: "A", // Default nilai awal
+        grade_koperasi: "A",
         kota_domisili: "",
-        tipe_sektor: "SEKTOR_RIIL", // Default nilai awal
+        tipe_sektor: "SEKTOR_RIIL",
 
         // Data Proposal
         nomor_proposal_internal: "",
-        // Format YYYY-MM-DD untuk input type="date"
         tanggal_proposal: new Date().toISOString().substring(0, 10),
         jumlah_pembiayaan_diajukan: 0,
         tujuan_pembiayaan: "",
@@ -140,11 +139,6 @@ const ApplicationInfo = ({ isModal = false, prefilledId = null, onSaveSuccess = 
                         Lengkapi semua data yang diperlukan untuk mengajukan aplikasi pinjaman.
                     </p>
                 </div>
-                {!isModal && (
-                    <span className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-medium border border-blue-200">
-                        {prefilledId ? 'Data Tersimpan' : 'Draft Baru'}
-                    </span>
-                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

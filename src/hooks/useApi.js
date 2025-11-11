@@ -6,7 +6,9 @@ export const useApi = (apiFunction, dependencies = []) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [refetchIndex, setRefetchIndex] = useState(0);
   const { baseURL } = useApiContext();
+  const refetch = () => setRefetchIndex((prev) => prev + 1);
 
   useEffect(() => {
     let mounted = true;
@@ -14,7 +16,9 @@ export const useApi = (apiFunction, dependencies = []) => {
     const fetchData = async () => {
       if (!apiFunction) return;
 
-      setLoading(true);
+      if (data === null || data.length === 0 || refetchIndex > 0) {
+        setLoading(true);
+      }
       setError(null);
 
       try {
@@ -30,7 +34,7 @@ export const useApi = (apiFunction, dependencies = []) => {
         }
       } catch (err) {
         if (mounted) {
-          setData([]);
+          // setData([]);
           setError(err.message);
         }
       } finally {
@@ -45,7 +49,7 @@ export const useApi = (apiFunction, dependencies = []) => {
     return () => {
       mounted = false;
     };
-  }, [apiFunction, baseURL, ...dependencies]);
+  }, [apiFunction, ...dependencies, refetchIndex]);
 
-  return { data, loading, error, refetch: () => setData(null) };
+  return { data, loading, error, refetch };
 };

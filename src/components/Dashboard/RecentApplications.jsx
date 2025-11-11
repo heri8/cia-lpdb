@@ -11,31 +11,6 @@ const RecentApplications = () => {
         error,
     } = useApi(dashboardAPI.getRecentApplications);
 
-    // TODO: jika api backend sudah ada
-    // const [loading, setLoading] = useState(false);
-    // const [error, setError] = useState(false);
-
-    // const applications = [
-    //   {
-    //     id: "APL-2023-0012",
-    //     name: "PT. Maju Jaya Abadi",
-    //     score: 85,
-    //     status: "Layak",
-    //   },
-    //   {
-    //     id: "APL-2023-0011",
-    //     name: "CV. Sejahtera Bersama",
-    //     score: 75,
-    //     status: "Layak Bersyarat",
-    //   },
-    //   {
-    //     id: "APL-2023-0010",
-    //     name: "UD. Makmur Sentosa",
-    //     score: 45,
-    //     status: "Tidak Layak",
-    //   },
-    // ];
-
     const getStatusClass = (statusText) => {
         const classes = {
             Layak: "bg-green-100 text-green-800",
@@ -50,6 +25,10 @@ const RecentApplications = () => {
         if (score >= 80) return "bg-success";
         if (score >= 70) return "bg-warning";
         return "bg-danger";
+    };
+
+    const handleViewDetail = (applicationId) => {
+        navigate(`/applications/${applicationId}`);
     };
 
     if (loading) {
@@ -123,9 +102,9 @@ const RecentApplications = () => {
                                 Status
                             </th>
                             {/* Tombol Aksi dinonaktifkan karena belum ada endpointnya */}
-                            {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Aksi
-                            </th> */}
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -160,16 +139,15 @@ const RecentApplications = () => {
                                     </span>
                                 </td>
                                 {/* Tombol Aksi dinonaktifkan karena belum ada endpointnya */}
-                                {/* <td className="px-6 py-4">
+                                <td className="px-6 py-4">
                                     <div className="flex space-x-2">
-                                        <button className="text-primary-600 hover:text-primary-700 p-1 rounded">
+                                        <button
+                                            onClick={() => { handleViewDetail(app.id) }}
+                                            className="text-primary-600 hover:text-primary-700 p-1 rounded">
                                             <i className="fas fa-eye"></i>
                                         </button>
-                                        <button className="text-gray-500 hover:text-gray-700 p-1 rounded">
-                                            <i className="fas fa-download"></i>
-                                        </button>
                                     </div>
-                                </td> */}
+                                </td>
                             </tr>
                         ))}
                     </tbody>

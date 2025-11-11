@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { applicationsAPI } from "../services/api";
 import { useApi } from "../hooks/useApi";
-import ApplicationInfo from "../components/Upload/ApplicationInfo";
-import Modal from "../components/Application/Modal";
 import { useNavigate } from "react-router-dom";
 import useDebounce from "../hooks/useDebounce";
+import NewApplicationModal from "../components/Application/NewApplicationModal";
+import moment from "moment";
 
 const getStatusClass = (status) => {
     const normalizedStatus = status?.toUpperCase();
@@ -35,6 +35,13 @@ const Applications = () => {
     const [aiLoading, setAiLoading] = useState({});
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+
+    const handleNewApplicationCreated = (id) => {
+        refetch();
+    };
+
     const fetchApplications = useCallback(() => {
         const params = {
             page: currentPage,
@@ -46,7 +53,6 @@ const Applications = () => {
     }, [currentPage, statusFilter, debouncedSearchTerm]);
 
     useEffect(() => {
-        // Cek jika debouncedSearchTerm bukan nilai awal
         if (debouncedSearchTerm !== "") {
             setCurrentPage(1);
         }
@@ -197,103 +203,55 @@ const Applications = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {applications.map((app) => {
+                            {applications.map((app) => (
+                                <tr key={app.id} className="hover:bg-gray-50 transition">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="font-medium text-gray-900">{app.id}</p>
+                                    </td>
 
-                                const isDocUploaded = app.is_doc_uploaded || (app.status_pengajuan !== 'BARU' && app.status_pengajuan !== 'DRAFT');
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="text-sm text-gray-900">{app.nomor_proposal_internal || '-'}</p>
+                                    </td>
 
-                                return (
-                                    <tr key={app.id} className="hover:bg-gray-50 transition">
-                                        {/* ... (Kolom 1 - 6 tetap sama) ... */}
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <p className="font-medium text-gray-900">{app.id}</p>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <p className="text-sm text-gray-900">{app.nomor_proposal_internal || '-'}</p>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {/* ... (Tgl. Proposal) ... */}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <p className="text-gray-900">{app.nama_nasabah}</p>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {/* ... (Skor Final) ... */}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-3 py-1 text-xs rounded-full ${getStatusClass(app.status_pengajuan)} font-medium`}>
-                                                {app.status_pengajuan}
-                                            </span>
-                                        </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {app.tanggal_proposal ? moment(app.tanggal_proposal).format('DD MMMM YYYY') : '-'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <p className="text-gray-900">{app.nama_nasabah}</p>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {app.skor_final || '-'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-3 py-1 text-xs rounded-full ${getStatusClass(app.status_pengajuan)} font-medium`}>
+                                            {app.status_pengajuan}
+                                        </span>
+                                    </td>
 
-                                        {/* Kolom 7: Aksi */}
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex space-x-2 justify-center">
-                                                {/* Tombol Lihat Detail */}
-                                                {/* <button
-                                                    onClick={() => handleViewDetail(app.id)}
-                                                    className="text-primary-600 hover:text-primary-700 p-1 rounded"
-                                                    title="Lihat Detail"
-                                                >
-                                                    <i className="fas fa-eye"></i>
-                                                </button> */}
+                                    {/* Kolom 7: Aksi */}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex space-x-2 justify-center">
+                                            {/* Tombol Lihat Detail */}
+                                            <button
+                                                onClick={() => handleViewDetail(app.id)}
+                                                className="px-2 py-1 bg-blue-500 text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                                                title="Lihat Detail"
+                                            >
+                                                <i className="fas fa-eye"></i>
+                                            </button>
 
-                                                {/* Tombol Upload Dokumen */}
-                                                <button
-                                                    onClick={() => handleUploadDoc(app.id)}
-                                                    className="text-green-600 hover:text-green-700 p-1 rounded"
-                                                    title="Upload Dokumen"
-                                                >
-                                                    <i className="fas fa-cloud-upload-alt"></i>
-                                                </button>
-
-                                                {isDocUploaded && (
-                                                    <div className="flex space-x-1 border-l border-gray-200 ml-2 pl-2">
-                                                        {/* Ekstraksi AI (Trigger Pertama) */}
-                                                        <ButtonAITrigger
-                                                            appId={app.id}
-                                                            type="ekstraksi"
-                                                            label="AI OCR"
-                                                            handler={handleTriggerAnalysis}
-                                                            isLoading={aiLoading[`${app.id}-ekstraksi`]}
-                                                            color="bg-yellow-500"
-                                                        />
-
-                                                        {/* Analisis Bisnis */}
-                                                        <ButtonAITrigger
-                                                            appId={app.id}
-                                                            type="bisnis"
-                                                            label="Bisnis"
-                                                            handler={handleTriggerAnalysis}
-                                                            isLoading={aiLoading[`${app.id}-bisnis`]}
-                                                            color="bg-purple-500"
-                                                        />
-
-                                                        {/* Analisis Yuridis */}
-                                                        <ButtonAITrigger
-                                                            appId={app.id}
-                                                            type="yuridis"
-                                                            label="Yuridis"
-                                                            handler={handleTriggerAnalysis}
-                                                            isLoading={aiLoading[`${app.id}-yuridis`]}
-                                                            color="bg-teal-500"
-                                                        />
-
-                                                        {/* Analisis Risiko */}
-                                                        <ButtonAITrigger
-                                                            appId={app.id}
-                                                            type="risiko"
-                                                            label="Risiko"
-                                                            handler={handleTriggerAnalysis}
-                                                            isLoading={aiLoading[`${app.id}-risiko`]}
-                                                            color="bg-red-500"
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )
-                            })}
+                                            {/* Tombol Upload Dokumen */}
+                                            <button
+                                                onClick={() => handleUploadDoc(app.id)}
+                                                className="px-2 py-1 bg-green-500 text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                                                title="Upload Dokumen"
+                                            >
+                                                <i className="fas fa-cloud-upload-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
@@ -338,12 +296,6 @@ const Applications = () => {
             )}
         </button>
     );
-
-    const openModal = () => setIsModalOpen(true);
-    const closeModal = () => {
-        setIsModalOpen(false);
-        refetch();
-    };
 
     if (loading) {
         return (
@@ -407,13 +359,11 @@ const Applications = () => {
                 </div>
             </div>
 
-            <Modal
+            <NewApplicationModal
                 isOpen={isModalOpen}
                 onClose={closeModal}
-                title="Tambah Aplikasi Pinjaman Baru"
-            >
-                <ApplicationInfo isModal={true} />
-            </Modal>
+                onNewApplicationCreated={handleNewApplicationCreated}
+            />
         </div>
     );
 };
