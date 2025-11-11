@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import RequiredDocuments from "./RequiredDocuments";
-import { documentsAPI } from "../../services/api";
+import { applicationsAPI } from "../../services/api";
 import { useRequiredDocuments } from "../../hooks/useUploadData";
 
 const DocumentUpload = ({
@@ -155,7 +155,7 @@ const DocumentUpload = ({
                             klik untuk memilih file
                         </span>
                     </p>
-                    <p className="text-sm mt-1">PDF, JPG, PNG (maks. 10MB per file)</p>
+                    <p className="text-sm mt-1">PDF, JPG, PNG (maks. 50MB per file)</p>
                     <input
                         ref={fileInputRef}
                         type="file"
