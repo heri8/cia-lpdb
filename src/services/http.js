@@ -10,7 +10,7 @@ class HTTPService {
         "Content-Type": "application/json",
         ...this.config.headers,
       },
-      timeout: 30000,
+      // timeout: 30000,
     });
 
     this.instance.interceptors.response.use(
