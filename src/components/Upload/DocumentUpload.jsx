@@ -101,24 +101,15 @@ const DocumentUpload = ({
         setIsUploading(true);
 
         const formData = new FormData();
-        // Tambahkan semua file ke objek FormData
         filesToUpload.forEach((file) => {
-            // Catatan: Di backend nyata, Anda juga perlu mengirimkan 'tipe' dokumen
-            // Di sini kita hanya mengirim file generik dengan key 'documents'
             formData.append("documents", file);
         });
-
-        formData.append("applicationId", applicationId);
-
         try {
-            // ⭐️ Panggil API backend yang disimulasikan
-            await documentsAPI.upload(formData);
+            await applicationsAPI.uploadDocuments(applicationId, formData);
 
             setFilesToUpload([]);
             setIsUploading(false);
-            // alert("Dokumen berhasil diunggah dan siap diproses!"); // Diganti dengan callback
 
-            // Panggil callback ke parent (Upload.jsx) untuk me-refetch data
             if (onUploadComplete) onUploadComplete();
         } catch (error) {
             console.error("Upload failed:", error);
@@ -127,9 +118,6 @@ const DocumentUpload = ({
         }
     };
 
-    // ⭐️ PERHITUNGAN ULANG UNTUK PROGRESS BERDASARKAN DATA NYATA
-    const totalStagedFiles = filesToUpload.length;
-    // Gunakan panjang uploadedDocuments yang sebenarnya
     const currentUploadedCount = uploadedDocuments.length;
 
     // Asumsi Max Documents adalah 8 (sesuai contoh di RequiredDocuments)

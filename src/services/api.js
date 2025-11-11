@@ -27,7 +27,7 @@ export const dashboardAPI = {
 
 // Applications API
 export const applicationsAPI = {
-  getAll: (params = {}) => httpService.get("/applications", { params }),
+  getAll: (params = {}) => httpService.get("/applications", { params: params }),
 
   getById: (id) => httpService.get(`/applications/${id}`),
 

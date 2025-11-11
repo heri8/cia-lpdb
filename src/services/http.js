@@ -1,90 +1,75 @@
-// src/services/http.js
+import axios from "axios";
 import apiConfig from "../config/api";
 
 class HTTPService {
   constructor() {
     this.config = apiConfig.getConfig();
-  }
-
-  // Generic request method
-  async request(endpoint, options = {}) {
-    const {
-      method = "GET",
-      data = null,
-      headers = {},
-      ...restOptions
-    } = options;
-
-    const url = `${this.config.baseURL}${endpoint}`;
-
-    const config = {
-      method,
+    this.instance = axios.create({
+      baseURL: this.config.baseURL,
       headers: {
+        "Content-Type": "application/json",
         ...this.config.headers,
-        ...headers,
       },
-      ...restOptions,
-    };
+      timeout: 30000,
+    });
 
-    if (data) {
-      if (config.headers["Content-Type"] === "application/json") {
-        config.body = JSON.stringify(data);
-      } else {
-        config.body = data;
+    this.instance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        const errorMessage = error.response
+          ? error.response.data?.message ||
+            `HTTP Error ${error.response.status}`
+          : error.message;
+
+        console.error("API Request failed (Axios):", errorMessage);
+
+        // Melempar error dengan pesan yang lebih informatif
+        return Promise.reject({
+          message: errorMessage,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
       }
-    }
-
-    try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        return await response.json();
-      }
-
-      return await response.text();
-    } catch (error) {
-      console.error("API Request failed:", error);
-      throw error;
-    }
+    );
   }
 
-  // HTTP methods
-  get(endpoint, options = {}) {
-    return this.request(endpoint, { ...options, method: "GET" });
+  async get(endpoint, options = {}) {
+    // Axios menangani params secara otomatis di object options
+    const response = await this.instance.get(endpoint, options);
+    return response.data;
   }
 
-  post(endpoint, data, options = {}) {
-    return this.request(endpoint, { ...options, method: "POST", data });
+  async post(endpoint, data, options = {}) {
+    const response = await this.instance.post(endpoint, data, options);
+    return response.data;
   }
 
-  put(endpoint, data, options = {}) {
-    return this.request(endpoint, { ...options, method: "PUT", data });
+  async put(endpoint, data, options = {}) {
+    const response = await this.instance.put(endpoint, data, options);
+    return response.data;
   }
 
-  patch(endpoint, data, options = {}) {
-    return this.request(endpoint, { ...options, method: "PATCH", data });
+  async patch(endpoint, data, options = {}) {
+    const response = await this.instance.patch(endpoint, data, options);
+    return response.data;
   }
 
-  delete(endpoint, options = {}) {
-    return this.request(endpoint, { ...options, method: "DELETE" });
+  async delete(endpoint, options = {}) {
+    const response = await this.instance.delete(endpoint, options);
+    return response.data;
   }
 
-  // File upload
-  upload(endpoint, formData, options = {}) {
-    return this.request(endpoint, {
+  // File upload (Menggunakan FormData, Axios secara otomatis menghapus Content-Type header
+  // jika data adalah FormData agar boundary bisa disetel oleh browser)
+  async upload(endpoint, formData, options = {}) {
+    const response = await this.instance.post(endpoint, formData, {
       ...options,
-      method: "POST",
-      data: formData,
       headers: {
         ...options.headers,
-        // Let browser set Content-Type for FormData
+        "Content-Type": "multipart/form-data",
       },
     });
+    return response.data;
   }
 }
 

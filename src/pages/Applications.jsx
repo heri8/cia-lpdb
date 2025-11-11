@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { applicationsAPI } from "../services/api";
 import { useApi } from "../hooks/useApi";
 import ApplicationInfo from "../components/Upload/ApplicationInfo";
 import Modal from "../components/Application/Modal";
 import { useNavigate } from "react-router-dom";
+import useDebounce from "../hooks/useDebounce";
 
 const getStatusClass = (status) => {
     const normalizedStatus = status?.toUpperCase();
@@ -31,18 +32,26 @@ const Applications = () => {
     const pageSize = 10;
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [aiLoadingId, setAiLoadingId] = useState(null);
     const [aiLoading, setAiLoading] = useState({});
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
     const fetchApplications = useCallback(() => {
         const params = {
             page: currentPage,
             limit: pageSize,
-            status: statusFilter,
-            search: searchTerm,
+            status_filter: statusFilter,
+            search: debouncedSearchTerm,
         };
         return applicationsAPI.getAll(params);
-    }, [currentPage, statusFilter, searchTerm]);
+    }, [currentPage, statusFilter, debouncedSearchTerm]);
+
+    useEffect(() => {
+        // Cek jika debouncedSearchTerm bukan nilai awal
+        if (debouncedSearchTerm !== "") {
+            setCurrentPage(1);
+        }
+        refetch();
+    }, [debouncedSearchTerm]);
 
     const { data, loading, error, refetch } = useApi(fetchApplications);
 
@@ -71,22 +80,6 @@ const Applications = () => {
 
     const handleUploadDoc = (applicationId) => {
         navigate(`/upload/${applicationId}`);
-    };
-
-    const handleTriggerAI = async (applicationId) => {
-        if (aiLoadingId === applicationId) return;
-
-        setAiLoadingId(applicationId);
-        try {
-            await applicationsAPI.runAIExtraction(applicationId);
-            alert(`Ekstraksi AI untuk Aplikasi ID ${applicationId} berhasil dipicu!`);
-            refetch();
-        } catch (error) {
-            console.error("Gagal memicu ekstraksi AI:", error);
-            alert(`Gagal memicu Ekstraksi AI: ${error.message}`);
-        } finally {
-            setAiLoadingId(null);
-        }
     };
 
     const handleTriggerAnalysis = async (applicationId, analysisType) => {
@@ -384,7 +377,6 @@ const Applications = () => {
                         value={searchTerm}
                         onChange={(e) => {
                             setSearchTerm(e.target.value);
-                            setCurrentPage(1); // Reset page
                         }}
                         className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
