@@ -1,154 +1,9 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { applicationsAPI } from "../services/api";
 import { useApi } from "../hooks/useApi";
 import ApplicationInfo from "../components/Upload/ApplicationInfo";
 import Modal from "../components/Application/Modal";
 import { useNavigate } from "react-router-dom";
-import moment from "moment";
-
-const mockApplications = [
-    {
-        id: "APL-2023-0020",
-        name: "Koperasi Jaya Baru",
-        date: "20 Nov 2023",
-        score: 88,
-        status: "Layak (Disetujui)",
-    },
-    {
-        id: "APL-2023-0019",
-        name: "PT. Lima Sekawan",
-        date: "19 Nov 2023",
-        score: 65,
-        status: "Pending Review",
-    },
-    {
-        id: "APL-2023-0018",
-        name: "CV. Makmur Jaya",
-        date: "18 Nov 2023",
-        score: 95,
-        status: "Layak (Disetujui)",
-    },
-    {
-        id: "APL-2023-0017",
-        name: "UD. Berkah Ilahi",
-        date: "17 Nov 2023",
-        score: 72,
-        status: "Layak Bersyarat",
-    },
-    {
-        id: "APL-2023-0016",
-        name: "PT. Sentosa Bersama",
-        date: "16 Nov 2023",
-        score: 50,
-        status: "Tidak Layak",
-    },
-    {
-        id: "APL-2023-0015",
-        name: "PT. Sentosa Makmur",
-        date: "14 Nov 2023",
-        score: 92,
-        status: "Layak (Disetujui)",
-    },
-    {
-        id: "APL-2023-0014",
-        name: "CV. Global Mandiri",
-        date: "12 Nov 2023",
-        score: 77,
-        status: "Layak Bersyarat",
-    },
-    {
-        id: "APL-2023-0013",
-        name: "UD. Sumber Rejeki",
-        date: "11 Nov 2023",
-        score: 45,
-        status: "Tidak Layak",
-    },
-    {
-        id: "APL-2023-0012",
-        name: "PT. Maju Jaya Abadi",
-        date: "10 Nov 2023",
-        score: 85,
-        status: "Layak (Diproses)",
-    },
-    {
-        id: "APL-2023-0011",
-        name: "Koperasi Unit Desa",
-        date: "09 Nov 2023",
-        score: 68,
-        status: "Pending Review",
-    },
-    // Tambahkan 10 item lagi untuk mengisi 2 halaman penuh
-    {
-        id: "APL-2023-0010",
-        name: "PT. Sukses Selalu",
-        date: "08 Nov 2023",
-        score: 81,
-        status: "Layak (Disetujui)",
-    },
-    {
-        id: "APL-2023-0009",
-        name: "CV. Cahaya Abadi",
-        date: "07 Nov 2023",
-        score: 70,
-        status: "Layak Bersyarat",
-    },
-    {
-        id: "APL-2023-0008",
-        name: "UD. Fast Food",
-        date: "06 Nov 2023",
-        score: 55,
-        status: "Tidak Layak",
-    },
-    {
-        id: "APL-2023-0007",
-        name: "PT. Logistik Cepat",
-        date: "05 Nov 2023",
-        score: 90,
-        status: "Layak (Disetujui)",
-    },
-    {
-        id: "APL-2023-0006",
-        name: "Kop. Tani Makmur",
-        date: "04 Nov 2023",
-        score: 62,
-        status: "Pending Review",
-    },
-    {
-        id: "APL-2023-0005",
-        name: "PT. Retail Besar",
-        date: "03 Nov 2023",
-        score: 79,
-        status: "Layak Bersyarat",
-    },
-    {
-        id: "APL-2023-0004",
-        name: "CV. Konstruksi",
-        date: "02 Nov 2023",
-        score: 40,
-        status: "Tidak Layak",
-    },
-    {
-        id: "APL-2023-0003",
-        name: "UD. Jasa Bersih",
-        date: "01 Nov 2023",
-        score: 83,
-        status: "Layak (Diproses)",
-    },
-    {
-        id: "APL-2023-0002",
-        name: "PT. Digital Kreatif",
-        date: "31 Okt 2023",
-        score: 98,
-        status: "Layak (Disetujui)",
-    },
-    {
-        id: "APL-2023-0001",
-        name: "Kop. Simpan Pinjam",
-        date: "30 Okt 2023",
-        score: 58,
-        status: "Pending Review",
-    },
-];
 
 const getStatusClass = (status) => {
     const normalizedStatus = status?.toUpperCase();
@@ -169,14 +24,6 @@ const getStatusClass = (status) => {
     return classes.DRAFT;
 };
 
-// Fungsi untuk menentukan kelas warna Progress Bar Skor
-const getProgressColor = (score) => {
-    if (score === null || score === undefined) return "bg-gray-300"; // Jika skor null/belum dinilai
-    if (score >= 80) return "bg-success";
-    if (score >= 70) return "bg-warning";
-    return "bg-danger";
-};
-
 const Applications = () => {
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
@@ -184,10 +31,8 @@ const Applications = () => {
     const pageSize = 10;
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    // const applications = mockApplications;
-    // const loading = false;
-    // const error = null;
+    const [aiLoadingId, setAiLoadingId] = useState(null);
+    const [aiLoading, setAiLoading] = useState({});
 
     const fetchApplications = useCallback(() => {
         const params = {
@@ -226,6 +71,65 @@ const Applications = () => {
 
     const handleUploadDoc = (applicationId) => {
         navigate(`/upload/${applicationId}`);
+    };
+
+    const handleTriggerAI = async (applicationId) => {
+        if (aiLoadingId === applicationId) return;
+
+        setAiLoadingId(applicationId);
+        try {
+            await applicationsAPI.runAIExtraction(applicationId);
+            alert(`Ekstraksi AI untuk Aplikasi ID ${applicationId} berhasil dipicu!`);
+            refetch();
+        } catch (error) {
+            console.error("Gagal memicu ekstraksi AI:", error);
+            alert(`Gagal memicu Ekstraksi AI: ${error.message}`);
+        } finally {
+            setAiLoadingId(null);
+        }
+    };
+
+    const handleTriggerAnalysis = async (applicationId, analysisType) => {
+        const key = `${applicationId}-${analysisType}`;
+        if (aiLoading[key]) return;
+
+        setAiLoading(prev => ({ ...prev, [key]: true }));
+
+        let apiCall;
+        let successMessage;
+
+        switch (analysisType) {
+            case 'ekstraksi':
+                apiCall = applicationsAPI.runAIExtraction(applicationId);
+                successMessage = "Ekstraksi AI";
+                break;
+            case 'bisnis':
+                apiCall = applicationsAPI.runBusinessAnalysis(applicationId);
+                successMessage = "Analisis Bisnis";
+                break;
+            case 'yuridis':
+                apiCall = applicationsAPI.runJuridicalAnalysis(applicationId);
+                successMessage = "Analisis Yuridis";
+                break;
+            case 'risiko':
+                apiCall = applicationsAPI.runRiskAnalysis(applicationId);
+                successMessage = "Analisis Risiko";
+                break;
+            default:
+                setAiLoading(prev => ({ ...prev, [key]: false }));
+                return;
+        }
+
+        try {
+            await apiCall;
+            alert(`${successMessage} untuk Aplikasi ID ${applicationId} berhasil dipicu!`);
+            refetch(); // Muat ulang data
+        } catch (error) {
+            console.error(`Gagal memicu ${successMessage}:`, error);
+            alert(`Gagal memicu ${successMessage}: ${error.message}`);
+        } finally {
+            setAiLoading(prev => ({ ...prev, [key]: false }));
+        }
     };
 
     const renderContent = () => {
@@ -300,79 +204,103 @@ const Applications = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {applications.map((app) => (
-                                <tr key={app.id} className="hover:bg-gray-50 transition">
-                                    {/* Kolom 1: ID Aplikasi */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="font-medium text-gray-900">{app.id}</p>
-                                    </td>
+                            {applications.map((app) => {
 
-                                    {/* Kolom 2: Nomor Proposal Internal */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-sm text-gray-900">
-                                            {app.nomor_proposal_internal || '-'}
-                                        </p>
-                                    </td>
+                                const isDocUploaded = app.is_doc_uploaded || (app.status_pengajuan !== 'BARU' && app.status_pengajuan !== 'DRAFT');
 
-                                    {/* Kolom 3: Tanggal Proposal */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-sm text-gray-500">
-                                            {app.tanggal_proposal ? moment(app.tanggal_proposal).format('DD MMM YYYY') : '-'}
-                                        </p>
-                                    </td>
+                                return (
+                                    <tr key={app.id} className="hover:bg-gray-50 transition">
+                                        {/* ... (Kolom 1 - 6 tetap sama) ... */}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="font-medium text-gray-900">{app.id}</p>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="text-sm text-gray-900">{app.nomor_proposal_internal || '-'}</p>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {/* ... (Tgl. Proposal) ... */}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="text-gray-900">{app.nama_nasabah}</p>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {/* ... (Skor Final) ... */}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-3 py-1 text-xs rounded-full ${getStatusClass(app.status_pengajuan)} font-medium`}>
+                                                {app.status_pengajuan}
+                                            </span>
+                                        </td>
 
-                                    {/* Kolom 4: Nama Nasabah */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-gray-900">{app.nama_nasabah}</p>
-                                    </td>
+                                        {/* Kolom 7: Aksi */}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex space-x-2 justify-center">
+                                                {/* Tombol Lihat Detail */}
+                                                {/* <button
+                                                    onClick={() => handleViewDetail(app.id)}
+                                                    className="text-primary-600 hover:text-primary-700 p-1 rounded"
+                                                    title="Lihat Detail"
+                                                >
+                                                    <i className="fas fa-eye"></i>
+                                                </button> */}
 
-                                    {/* Kolom 5: Skor Final */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
-                                                <div
-                                                    className={`h-2 rounded-full ${getProgressColor(
-                                                        app.skor_final
-                                                    )}`}
-                                                    style={{ width: `${app.skor_final || 0}%` }}
-                                                ></div>
+                                                {/* Tombol Upload Dokumen */}
+                                                <button
+                                                    onClick={() => handleUploadDoc(app.id)}
+                                                    className="text-green-600 hover:text-green-700 p-1 rounded"
+                                                    title="Upload Dokumen"
+                                                >
+                                                    <i className="fas fa-cloud-upload-alt"></i>
+                                                </button>
+
+                                                {isDocUploaded && (
+                                                    <div className="flex space-x-1 border-l border-gray-200 ml-2 pl-2">
+                                                        {/* Ekstraksi AI (Trigger Pertama) */}
+                                                        <ButtonAITrigger
+                                                            appId={app.id}
+                                                            type="ekstraksi"
+                                                            label="AI OCR"
+                                                            handler={handleTriggerAnalysis}
+                                                            isLoading={aiLoading[`${app.id}-ekstraksi`]}
+                                                            color="bg-yellow-500"
+                                                        />
+
+                                                        {/* Analisis Bisnis */}
+                                                        <ButtonAITrigger
+                                                            appId={app.id}
+                                                            type="bisnis"
+                                                            label="Bisnis"
+                                                            handler={handleTriggerAnalysis}
+                                                            isLoading={aiLoading[`${app.id}-bisnis`]}
+                                                            color="bg-purple-500"
+                                                        />
+
+                                                        {/* Analisis Yuridis */}
+                                                        <ButtonAITrigger
+                                                            appId={app.id}
+                                                            type="yuridis"
+                                                            label="Yuridis"
+                                                            handler={handleTriggerAnalysis}
+                                                            isLoading={aiLoading[`${app.id}-yuridis`]}
+                                                            color="bg-teal-500"
+                                                        />
+
+                                                        {/* Analisis Risiko */}
+                                                        <ButtonAITrigger
+                                                            appId={app.id}
+                                                            type="risiko"
+                                                            label="Risiko"
+                                                            handler={handleTriggerAnalysis}
+                                                            isLoading={aiLoading[`${app.id}-risiko`]}
+                                                            color="bg-red-500"
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
-                                            <span className="font-medium">{app.skor_final !== null ? app.skor_final : 'N/A'}</span>
-                                        </div>
-                                    </td>
-
-                                    {/* Kolom 6: Status Pengajuan */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`px-3 py-1 text-xs rounded-full ${getStatusClass(
-                                                app.status_pengajuan
-                                            )} font-medium`}
-                                        >
-                                            {app.status_pengajuan}
-                                        </span>
-                                    </td>
-
-                                    {/* Kolom 7: Aksi */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex space-x-2">
-                                            {/* <button
-                                                onClick={() => handleViewDetail(app.id)}
-                                                className="text-primary-600 hover:text-primary-700 p-1 rounded"
-                                                title="Lihat Detail"
-                                            >
-                                                <i className="fas fa-eye"></i>
-                                            </button> */}
-                                            <button
-                                                onClick={() => handleUploadDoc(app.id)}
-                                                className="text-gray-500 hover:text-gray-700 p-1 rounded"
-                                                title="Upload Dokumen"
-                                            >
-                                                <i className="fas fa-cloud-upload-alt"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -402,6 +330,21 @@ const Applications = () => {
             </>
         );
     };
+
+    const ButtonAITrigger = ({ appId, type, label, handler, isLoading, color }) => (
+        <button
+            onClick={() => handler(appId, type)}
+            disabled={isLoading}
+            className={`px-2 py-1 ${color} text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed`}
+            title={`Trigger Analisis ${label}`}
+        >
+            {isLoading ? (
+                <i className="fas fa-spinner fa-spin"></i>
+            ) : (
+                <>{label}</>
+            )}
+        </button>
+    );
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => {

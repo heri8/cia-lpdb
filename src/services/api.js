@@ -41,6 +41,26 @@ export const applicationsAPI = {
     httpService.upload(`/applications/${id}/documents`, formData),
 
   getScoring: (id) => httpService.get(`/applications/${id}/scoring`),
+
+  runAIExtraction: (applicationId) => {
+    return httpService.post(`/pengajuan/${applicationId}/run-ekstraksi-ai`);
+  },
+
+  runBusinessAnalysis: (applicationId) => {
+    return httpService.post(`/pengajuan/${applicationId}/run-analisis-bisnis`);
+  },
+
+  runJuridicalAnalysis: (applicationId) => {
+    return httpService.post(`/pengajuan/${applicationId}/run-analisis-yuridis`);
+  },
+
+  runRiskAnalysis: (applicationId) => {
+    return httpService.post(`/pengajuan/${applicationId}/run-analisis-risiko`);
+  },
+
+  deepSearch: (query) => {
+    return httpService.get("/riset/deep-search", { params: { q: query } });
+  },
 };
 
 // Documents API
@@ -123,5 +143,5 @@ export default {
   system: systemAPI,
   llm: llmAPI,
   admin: adminAPI,
-  customers: customersAPI
+  customers: customersAPI,
 };
