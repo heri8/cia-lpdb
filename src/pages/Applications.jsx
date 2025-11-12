@@ -282,21 +282,6 @@ const Applications = () => {
         );
     };
 
-    const ButtonAITrigger = ({ appId, type, label, handler, isLoading, color }) => (
-        <button
-            onClick={() => handler(appId, type)}
-            disabled={isLoading}
-            className={`px-2 py-1 ${color} text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed`}
-            title={`Trigger Analisis ${label}`}
-        >
-            {isLoading ? (
-                <i className="fas fa-spinner fa-spin"></i>
-            ) : (
-                <>{label}</>
-            )}
-        </button>
-    );
-
     if (loading) {
         return (
             <div className="p-6 text-center text-blue-500">

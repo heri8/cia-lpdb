@@ -1,7 +1,7 @@
 // src/components/Applications/ApplicationForm.jsx
 
 import React, { useState } from "react";
-import InputField from "./InputField"; // 💡 Import InputField
+import InputField from "./InputField";
 import { applicationsAPI } from "../../services/api";
 
 const SECTOR_OPTIONS = [
@@ -10,17 +10,30 @@ const SECTOR_OPTIONS = [
     { value: "PERDAGANGAN", label: "Perdagangan" },
 ];
 
+const INITIAL_FORM_DATA = {
+    // Data Nasabah/Koperasi
+    nama_koperasi: "",
+    npwp_institusi: "",
+    nomor_nik_koperasi: "",
+    grade_koperasi: "A",
+    kota_domisili: "",
+
+    // Data Aplikasi
+    nomor_proposal_internal: "",
+    tanggal_proposal: new Date().toISOString().substring(0, 10),
+    jumlah_pembiayaan_diajukan: 0,
+    tujuan_pembiayaan: "",
+    suku_bunga_diminta: 0,
+    tenor_diminta_bulan: 0,
+    tipe_sektor: SECTOR_OPTIONS[0].value,
+};
+
 const ApplicationForm = ({ initialData = {}, onSaveSuccess, applicationId = null }) => {
     const isEditing = !!applicationId;
 
     const [formData, setFormData] = useState({
-        nomor_proposal_internal: initialData.nomor_proposal_internal || "",
-        tanggal_proposal: initialData.tanggal_proposal || new Date().toISOString().substring(0, 10),
-        jumlah_pembiayaan_diajukan: initialData.jumlah_pembiayaan_diajukan || 0,
-        tujuan_pembiayaan: initialData.tujuan_pembiayaan || "",
-        suku_bunga_diminta: initialData.suku_bunga_diminta || 0,
-        tenor_diminta_bulan: initialData.tenor_diminta_bulan || 12,
-        tipe_sektor: initialData.tipe_sektor || SECTOR_OPTIONS[0].value,
+        ...INITIAL_FORM_DATA,
+        ...initialData,
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -45,16 +58,24 @@ const ApplicationForm = ({ initialData = {}, onSaveSuccess, applicationId = null
         setSaveMessage(null);
         setIsSaving(true);
 
+        if (!formData.nama_koperasi || !formData.nomor_proposal_internal || formData.jumlah_pembiayaan_diajukan <= 0) {
+            setSaveMessage("Harap lengkapi semua field wajib (Nama Koperasi, No. Proposal, Jumlah Pembiayaan).");
+            setIsSaving(false);
+            return;
+        }
+
         try {
             let response;
             if (isEditing) {
                 response = await applicationsAPI.update(applicationId, formData);
+                setSaveMessage("Aplikasi berhasil diperbarui!");
             } else {
                 response = await applicationsAPI.create(formData);
+                setSaveMessage("Aplikasi baru berhasil dibuat! Menuju halaman detail...");
             }
-
-            setSaveMessage(`Data aplikasi ${isEditing ? 'diperbarui' : 'dibuat'} dengan ID ${response.id} berhasil!`);
-            if (onSaveSuccess) onSaveSuccess(response.id);
+            setTimeout(() => {
+                onSaveSuccess(response.id || applicationId);
+            }, 1500);
 
         } catch (error) {
             console.error("Gagal menyimpan aplikasi:", error);
@@ -65,108 +86,145 @@ const ApplicationForm = ({ initialData = {}, onSaveSuccess, applicationId = null
     };
 
     return (
-        <div className="p-6 bg-white rounded-2xl shadow-soft border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-3">
-                {isEditing ? "Edit Aplikasi" : "Buat Aplikasi Baru"}
-            </h3>
+        <div className="p-4">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                <InputField
-                    id="nomor_proposal_internal"
-                    label="Nomor Proposal Internal"
-                    placeholder="Contoh: 001/APP/11/2025"
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    isSaving={isSaving}
-                    value={formData.nomor_proposal_internal}
-                    onChange={handleInputChange}
-                />
-
-                <InputField
-                    id="tanggal_proposal"
-                    label="Tanggal Proposal"
-                    type="date"
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    isSaving={isSaving}
-                    value={formData.tanggal_proposal}
-                    onChange={handleInputChange}
-                />
-
-                <InputField
-                    id="jumlah_pembiayaan_diajukan"
-                    label="Jumlah Pembiayaan Diajukan (IDR)"
-                    type="number"
-                    min={1000}
-                    step={1000}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    isSaving={isSaving}
-                    value={formData.jumlah_pembiayaan_diajukan}
-                    onChange={handleInputChange}
-                />
-
-                <InputField
-                    id="tenor_diminta_bulan"
-                    label="Tenor Diminta (Bulan)"
-                    type="number"
-                    min={1}
-                    step={1}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    isSaving={isSaving}
-                    value={formData.tenor_diminta_bulan}
-                    onChange={handleInputChange}
-                />
-
-                <InputField
-                    id="suku_bunga_diminta"
-                    label="Suku Bunga Diminta (%)"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    isSaving={isSaving}
-                    value={formData.suku_bunga_diminta}
-                    onChange={handleInputChange}
-                />
-
-                <InputField
-                    id="tipe_sektor"
-                    label="Tipe Sektor"
-                    type="select"
-                    options={SECTOR_OPTIONS}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    isSaving={isSaving}
-                    value={formData.tipe_sektor}
-                    onChange={handleInputChange}
-                />
-
-                {/* Text Area */}
-                <div className="lg:col-span-3">
+            {/* ⭐️ BAGIAN 1: INFORMASI NASABAH (KOPERASI) */}
+            <div className="mb-8 p-6 bg-white rounded-2xl shadow-soft border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-3">
+                    Informasi Koperasi / Nasabah
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InputField
-                        id="tujuan_pembiayaan"
-                        label="Tujuan Pembiayaan"
-                        placeholder="Deskripsikan tujuan penggunaan dana pembiayaan..."
-                        isTextArea
-                        formData={formData}
-                        handleInputChange={handleInputChange}
-                        isSaving={isSaving}
-                        value={formData.tujuan_pembiayaan}
+                        id="nama_koperasi"
+                        label="Nama Koperasi"
+                        value={formData.nama_koperasi}
                         onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                        placeholder="Masukkan nama koperasi"
                     />
+                    <InputField
+                        id="grade_koperasi"
+                        label="Grade Koperasi"
+                        value={formData.grade_koperasi}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                        placeholder="Contoh: A, B, atau C"
+                    />
+                    <InputField
+                        id="npwp_institusi"
+                        label="NPWP Institusi"
+                        value={formData.npwp_institusi}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                        placeholder="Masukkan NPWP institusi"
+                    />
+                    <InputField
+                        id="nomor_nik_koperasi"
+                        label="NIK Koperasi"
+                        value={formData.nomor_nik_koperasi}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                        placeholder="Masukkan NIK koperasi"
+                    />
+                    <InputField
+                        id="kota_domisili"
+                        label="Kota Domisili"
+                        value={formData.kota_domisili}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                        placeholder="Contoh: Jakarta, Bekasi"
+                    />
+                    {/* Tambahan field untuk menjaga alignment */}
+                    <div className="hidden md:block"></div>
                 </div>
+            </div>
 
+            {/* ⭐️ BAGIAN 2: FORMULIR APLIKASI */}
+            <div className="mb-8 p-6 bg-white rounded-2xl shadow-soft border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-3">
+                    Informasi Proposal Aplikasi
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InputField
+                        id="nomor_proposal_internal"
+                        label="No. Proposal Internal"
+                        value={formData.nomor_proposal_internal}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                        placeholder="Contoh: PRO-001/2025"
+                    />
+                    <InputField
+                        id="tanggal_proposal"
+                        label="Tanggal Proposal"
+                        type="date"
+                        value={formData.tanggal_proposal}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                    />
+                    <InputField
+                        id="jumlah_pembiayaan_diajukan"
+                        label="Jumlah Pembiayaan Diajukan (IDR)"
+                        type="number"
+                        value={formData.jumlah_pembiayaan_diajukan}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                    />
+                    <InputField
+                        id="suku_bunga_diminta"
+                        label="Suku Bunga Diminta (%)"
+                        type="number"
+                        step="0.01"
+                        value={formData.suku_bunga_diminta}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                    />
+                    <InputField
+                        id="tenor_diminta_bulan"
+                        label="Tenor Diminta (Bulan)"
+                        type="number"
+                        value={formData.tenor_diminta_bulan}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                    />
+                    <InputField
+                        id="tipe_sektor"
+                        label="Tipe Sektor"
+                        options={SECTOR_OPTIONS}
+                        value={formData.tipe_sektor}
+                        onChange={handleInputChange}
+                        isDisabled={allFormDisabled}
+                        isSaving={isSaving}
+                    />
+                    <div className="md:col-span-2">
+                        <InputField
+                            id="tujuan_pembiayaan"
+                            label="Tujuan Pembiayaan"
+                            isTextArea
+                            value={formData.tujuan_pembiayaan}
+                            onChange={handleInputChange}
+                            isDisabled={allFormDisabled}
+                            isSaving={isSaving}
+                            placeholder="Jelaskan secara singkat tujuan pembiayaan ini..."
+                        />
+                    </div>
+                </div>
             </div>
 
             {/* Tombol Simpan */}
             <div className="mt-8 pt-4 border-t border-gray-100 flex flex-col sm:flex-row justify-end items-center">
                 {/* Pesan Konfirmasi Simpan */}
                 {saveMessage && (
-                    <div className={`mr-4 mb-3 sm:mb-0 p-3 text-sm font-semibold rounded-xl transition-opacity duration-300 ${saveMessage.includes("berhasil") ? "text-green-700 bg-green-100 border border-green-200" : "text-red-700 bg-red-100 border border-red-200"}`}>
+                    <div className={`mr-4 mb-3 sm:mb-0 p-3 text-sm font-semibold rounded-xl transition-opacity duration-300 ${saveMessage.includes("berhasil") ? "text-green-700 bg-green-100 border border-green-200" : "text-red-700 bg-red-100 border border-red-200"}`}>\
                         {saveMessage}
                     </div>
                 )}
