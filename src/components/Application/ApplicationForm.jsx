@@ -6,8 +6,7 @@ import { applicationsAPI } from "../../services/api";
 
 const SECTOR_OPTIONS = [
     { value: "SEKTOR_RIIL", label: "Sektor Riil" },
-    { value: "JASA", label: "Jasa" },
-    { value: "PERDAGANGAN", label: "Perdagangan" },
+    { value: "SIMPAN_PINJAM", label: "Simpan Pinjam" },
 ];
 
 const INITIAL_FORM_DATA = {
