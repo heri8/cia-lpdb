@@ -1,3 +1,5 @@
+import moment from "moment";
+
 const UploadHistory = ({ applicationId, history = [] }) => {
 
     const getStatusClass = (color) => {
@@ -8,67 +10,74 @@ const UploadHistory = ({ applicationId, history = [] }) => {
         return classes[color] || classes.green;
     };
 
-    return (
-        <div className="bg-white rounded-2xl shadow-soft p-6 border border-gray-100">
-            <div className="flex justify-between items-center mb-6">
-                {/* 💡 Tampilkan ID Aplikasi */}
-                <h3 className="text-lg font-semibold text-gray-800">
-                    Riwayat Upload Dokumen Aplikasi #{applicationId}
-                </h3>
-                {/* <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                    Lihat Semua <i className="fas fa-chevron-right ml-1 text-xs"></i>
-                </button> */}
-            </div>
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return moment(dateString).format('DD MMMM YYYY, HH:mm');
+    };
 
-            <div className="overflow-x-auto">
-                <table className="w-full">
+    return (
+        <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                Riwayat Unggahan Dokumen
+            </h2>
+            <div className="rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ID Aplikasi
+                            {/* 💡 Perubahan Header Tabel */}
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                                Tipe Dokumen
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Nama
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
+                                Nama File
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tanggal Upload
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                                Tanggal Unggah
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                                 Aksi
-                            </th>
+                            </th> */}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {history.map((item, index) => (
-                            <tr key={index} className="hover:bg-gray-50 transition">
-                                <td className="px-4 py-4">
-                                    <p className="font-medium text-gray-900">{item.id}</p>
-                                </td>
-                                <td className="px-4 py-4">
-                                    <p className="text-gray-900">{item.name}</p>
-                                </td>
-                                <td className="px-4 py-4">
-                                    <p className="text-sm text-gray-500">{item.date}</p>
-                                </td>
-                                <td className="px-4 py-4">
-                                    <span
-                                        className={`px-3 py-1 text-xs rounded-full ${getStatusClass(
-                                            item.statusColor
-                                        )} font-medium`}
-                                    >
-                                        {item.status}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-4">
-                                    <button className="text-primary-600 hover:text-primary-700 p-1 rounded">
-                                        <i className="fas fa-eye"></i>
-                                    </button>
+                        {/* 💡 Mengiterasi data dokumen yang baru */}
+                        {history.length > 0 ? (
+                            history.map((doc) => (
+                                <tr key={doc.id} className="hover:bg-gray-50 transition">
+                                    <td className="px-4 py-4">
+                                        <p className="font-medium text-gray-900">
+                                            {doc.tipe_dokumen}
+                                        </p>
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <p className="text-gray-900 truncate" title={doc.nama_file_asli}>
+                                            {doc.nama_file_asli}
+                                        </p>
+                                        {/* Tampilkan path penyimpanan jika perlu */}
+                                        {/* <p className="text-xs text-gray-500">{doc.path_penyimpanan}</p> */}
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        <p className="text-sm text-gray-500">
+                                            {formatDate(doc.uploaded_at)}
+                                        </p>
+                                    </td>
+                                    {/* <td className="px-4 py-4">
+                                        <button
+                                            className="text-blue-600 hover:text-blue-700 p-1 rounded"
+                                            onClick={() => alert(`Aksi untuk dokumen ID: ${doc.id}`)}
+                                        >
+                                            <i className="fas fa-download mr-1"></i> Unduh
+                                        </button>
+                                    </td> */}
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                                    Belum ada dokumen yang diunggah untuk aplikasi ini.
                                 </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>

@@ -109,9 +109,6 @@ const DocumentUpload = ({
             return;
         }
 
-        console.log('formData: ', formData);
-        
-
         try {
             // Panggil API Upload
             // Asumsi documentsAPI.upload(formData) memanggil httpService.upload()
@@ -124,35 +121,6 @@ const DocumentUpload = ({
             // Menangani error dari backend (termasuk validasi 'missing field')
             const msg = error.data?.detail?.[0]?.msg || error.message || "Gagal mengunggah dokumen karena kesalahan tak terduga.";
             setUploadError(msg);
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleUploadasas = async () => {
-        if (filesToUpload.length === 0) return;
-
-        setUploadError(null);
-        setIsUploading(true);
-
-        const formData = new FormData();
-        filesToUpload.forEach(file => {
-            formData.append('files', file.file);
-        });
-
-        formData.append('applicationId', applicationId);
-
-        try {
-            await documentsAPI.upload(applicationId, formData);
-
-            setFilesToUpload([]);
-            if (onUploadComplete) onUploadComplete();
-            console.log('Unggahan Berhasil!');
-
-        } catch (error) {
-            const errorMsg = error.response?.data?.message || error.message || "Gagal mengunggah dokumen.";
-            setUploadError(errorMsg);
-
         } finally {
             setIsUploading(false);
         }

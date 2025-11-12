@@ -79,6 +79,9 @@ export const documentsAPI = {
 
   download: (documentId) =>
     httpService.get(`/documents/${documentId}/download`),
+
+  getDocumentHistory: (applicationId) =>
+        httpService.get(`/applications/${applicationId}/documents`),
 };
 
 // Analytics API
