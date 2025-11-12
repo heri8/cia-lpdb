@@ -34,7 +34,7 @@ const Upload = () => {
     );
 
     const fetchHistory = useCallback(
-        () => documentsAPI.getDocumentHistory(applicationId),
+        () => documentsAPI.getUploadHistory(applicationId),
         [applicationId]
     );
 
@@ -220,7 +220,6 @@ const Upload = () => {
                 {/* Riwayat Unggahan */}
                 <div className="mt-8">
                     <UploadHistory
-                        applicationId={applicationId}
                         history={uploadHistory || []}
                     />
                 </div>

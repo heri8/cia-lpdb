@@ -18,6 +18,7 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
     { path: "/configuration", icon: "cog", label: "Konfigurasi", roles: [USER_ROLES.ADMIN] }, // Hanya Admin
     { path: '/api-configuration', icon: 'server', label: 'API Config', roles: [USER_ROLES.ADMIN] }, // Jika ini diaktifkan
     { path: "/admin", icon: "shield-alt", label: "Admin & Audit", roles: [USER_ROLES.ADMIN] }, // Hanya Admin
+    { path: "/rules", icon: "cog", label: "Rules", roles: [USER_ROLES.ADMIN, USER_ROLES.ANALYST] }, // Hanya Admin
   ];
 
   const menuItems = allMenuItems.filter(item => hasRole(item.roles));

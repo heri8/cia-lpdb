@@ -79,9 +79,6 @@ export const documentsAPI = {
 
   download: (documentId) =>
     httpService.get(`/documents/${documentId}/download`),
-
-  getDocumentHistory: (applicationId) =>
-        httpService.get(`/applications/${applicationId}/documents`),
 };
 
 // Analytics API
@@ -134,6 +131,14 @@ export const adminAPI = {
     httpService.get("/admin/audit-logs", { params }),
 
   createUser: (userData) => httpService.post("/admin/users", userData),
+
+  getRules: () => httpService.get("/admin/rules"),
+
+  updateVariableWeights: (variabelId, weights) =>
+    httpService.put(`/admin/rules/variabel/${variabelId}/weights`, weights),
+
+  updateSkalaRule: (skalaId, data) =>
+    httpService.put(`/admin/rules/skala/${skalaId}`, data),
 };
 
 // Export all APIs

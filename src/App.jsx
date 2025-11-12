@@ -24,6 +24,8 @@ const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
 
 const ApiConfiguration = lazy(() => import("./pages/ApiConfiguration"));
 
+const AdminRules = lazy(() => import("./pages/AdminRules"));
+
 const AppRouter = () => {
   const { isAuthenticated, isLoading, logout } = useAuth();
 
@@ -167,6 +169,21 @@ const AppRouter = () => {
                       ]}
                     >
                       <Customers />
+                    </RoleRouteGuard>
+                  }
+                />
+
+                <Route
+                  path="/rules"
+                  element={
+                    <RoleRouteGuard
+                      requiredRoles={[
+                        USER_ROLES.ADMIN,
+                        USER_ROLES.ANALYST,
+                        USER_ROLES.REVIEWER,
+                      ]}
+                    >
+                      <AdminRules />
                     </RoleRouteGuard>
                   }
                 />
