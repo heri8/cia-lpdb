@@ -68,6 +68,68 @@ const DocumentUpload = ({
     };
 
     const handleUpload = async () => {
+        setUploadError(null);
+        setIsUploading(true);
+
+        if (!applicationId) {
+            setUploadError("ID Aplikasi (applicationId) tidak tersedia.");
+            setIsUploading(false);
+            return;
+        }
+
+        if (filesToUpload.length === 0) {
+            setUploadError("Pilih setidaknya satu file untuk diunggah.");
+            setIsUploading(false);
+            return;
+        }
+
+        const formData = new FormData();
+
+        // 1. Tambahkan applicationId (Key 'applicationId' required oleh backend)
+        formData.append("pengajuan_id", applicationId);
+
+        // 2. Tambahkan File(s) (Key 'files' required oleh backend)
+        let hasValidFile = false;
+        filesToUpload.forEach((item) => {
+            const fileObject = item.file;
+            const fileName = item.name;
+
+            if (fileObject instanceof File || fileObject instanceof Blob) {
+                formData.append("files", fileObject, fileName);
+                hasValidFile = true;
+            } else {
+                console.error("Item is not a valid File/Blob object:", item);
+            }
+        });
+
+        // Pencegahan jika semua file yang dipilih ternyata tidak valid
+        if (!hasValidFile) {
+            setUploadError("Tidak ada file valid yang ditemukan untuk diunggah.");
+            setIsUploading(false);
+            return;
+        }
+
+        console.log('formData: ', formData);
+        
+
+        try {
+            // Panggil API Upload
+            // Asumsi documentsAPI.upload(formData) memanggil httpService.upload()
+            await documentsAPI.upload(formData);
+
+            setFilesToUpload([]); // Reset daftar file setelah sukses
+            onUploadComplete(); // Panggil fungsi di parent untuk refetch data
+
+        } catch (error) {
+            // Menangani error dari backend (termasuk validasi 'missing field')
+            const msg = error.data?.detail?.[0]?.msg || error.message || "Gagal mengunggah dokumen karena kesalahan tak terduga.";
+            setUploadError(msg);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleUploadasas = async () => {
         if (filesToUpload.length === 0) return;
 
         setUploadError(null);
@@ -75,8 +137,9 @@ const DocumentUpload = ({
 
         const formData = new FormData();
         filesToUpload.forEach(file => {
-            formData.append('documents', file.file);
+            formData.append('files', file.file);
         });
+
         formData.append('applicationId', applicationId);
 
         try {

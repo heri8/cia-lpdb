@@ -59,10 +59,20 @@ class HTTPService {
     return response.data;
   }
 
-  // File upload (Menggunakan FormData, Axios secara otomatis menghapus Content-Type header
-  // jika data adalah FormData agar boundary bisa disetel oleh browser)
+  // async upload(endpoint, formData, options = {}) {
+  //   const response = await this.instance.post(endpoint, formData, options);
+  //   return response.data;
+  // }
+
   async upload(endpoint, formData, options = {}) {
-    const response = await this.instance.post(endpoint, formData, options);
+    const response = await this.instance.post(endpoint, formData, {
+      ...options,
+      headers: {
+        ...options.headers,
+        "Content-Type": undefined,
+      },
+    });
+
     return response.data;
   }
 }
