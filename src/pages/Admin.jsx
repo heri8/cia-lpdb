@@ -72,136 +72,134 @@ const Admin = () => {
 
     return (
         <div className="flex-1 overflow-auto p-4 lg:p-6">
-            <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">
-                        <i className="fas fa-tools mr-2"></i> Halaman Administrator
-                    </h1>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium"
-                    >
-                        <i className="fas fa-user-plus mr-2"></i> Tambah Pengguna
-                    </button>
-                </div>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">
+                    <i className="fas fa-tools mr-2"></i> Halaman Administrator
+                </h1>
+                <button
+                    onClick={() => handleOpenModal()}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium"
+                >
+                    <i className="fas fa-user-plus mr-2"></i> Tambah Pengguna
+                </button>
+            </div>
 
-                {/* -------------------------------------------------------- */}
-                {/* ---------- BAGIAN 1: PENGELOLAAN PENGGUNA ---------- */}
-                {/* -------------------------------------------------------- */}
-                <h2 className="text-xl font-bold text-gray-700 mb-4 mt-8 border-b pb-2">
-                    Pengelolaan Pengguna Sistem
-                </h2>
+            {/* -------------------------------------------------------- */}
+            {/* ---------- BAGIAN 1: PENGELOLAAN PENGGUNA ---------- */}
+            {/* -------------------------------------------------------- */}
+            <h2 className="text-xl font-bold text-gray-700 mb-4 mt-8 border-b pb-2">
+                Pengelolaan Pengguna Sistem
+            </h2>
 
-                <div className="rounded-2xl overflow-hidden shadow-soft border border-gray-100 bg-white mb-10">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-3/12">Nama & Email</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Role</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-4/12">Login Terakhir</th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {users && users.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.id}</td>
+            <div className="rounded-2xl overflow-hidden shadow-soft border border-gray-100 bg-white mb-10">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-3/12">Nama & Email</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-4/12">Login Terakhir</th>
+                            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {users && users.map((user) => (
+                            <tr key={user.id} className="hover:bg-gray-50 transition">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.id}</td>
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="font-semibold text-gray-900">{user.nama_lengkap}</p>
-                                        <p className="text-xs text-gray-500">{user.email}</p>
-                                    </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <p className="font-semibold text-gray-900">{user.nama_lengkap}</p>
+                                    <p className="text-xs text-gray-500">{user.email}</p>
+                                </td>
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-3 py-1 text-xs rounded-full font-medium ${getRoleClass(user.role)}`}>
-                                            {user.role}
-                                        </span>
-                                    </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${getRoleClass(user.role)}`}>
+                                        {user.role}
+                                    </span>
+                                </td>
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusClass(user.status_aktif)}`}>
-                                            {user.status_aktif ? "Aktif" : "Non-aktif"}
-                                        </span>
-                                    </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusClass(user.status_aktif)}`}>
+                                        {user.status_aktif ? "Aktif" : "Non-aktif"}
+                                    </span>
+                                </td>
 
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {user.last_login
-                                            ? moment(user.last_login).format("DD MMM YYYY, HH:mm:ss")
-                                            : "-"}
-                                    </td>
-                                    
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        {/* <button
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {user.last_login
+                                        ? moment(user.last_login).format("DD MMM YYYY, HH:mm:ss")
+                                        : "-"}
+                                </td>
+
+                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                    {/* <button
                                             onClick={() => handleOpenModal(user)}
                                             className="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-gray-100"
                                             title="Edit Pengguna"
                                         >
                                             <i className="fas fa-edit"></i>
                                         </button> */}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {(!users || users.length === 0) && (
-                        <div className="p-6 text-center text-gray-500">
-                            Tidak ada data pengguna ditemukan.
-                        </div>
-                    )}
-                </div>
-
-
-                {/* -------------------------------------------------------- */}
-                {/* ---------- BAGIAN 2: LOG AUDIT SISTEM ---------- */}
-                {/* -------------------------------------------------------- */}
-                <h2 className="text-xl font-bold text-gray-700 mb-4 mt-8 border-b pb-2">
-                    Log Audit Sistem
-                </h2>
-
-                <div className="rounded-2xl overflow-hidden shadow-soft border border-gray-100 bg-white">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">ID Log</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">Waktu</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">Pelaku (Email)</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Aksi</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-6/12">Deskripsi Detail</th>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {logs && logs.map((log) => (
-                                // Asumsi log memiliki properti: id, user_email, action, timestamp, details
-                                <tr key={log.id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {moment(log.timestamp).format("DD MMM YYYY, HH:mm:ss")}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {log.user_email || '-'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-3 py-1 text-xs rounded-full font-medium ${getActionClass(log.action)}`}>
-                                            {log.action}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-700 break-words">
-                                        {log.details || "Tidak ada detail tambahan."}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                        ))}
+                    </tbody>
+                </table>
 
-                    {(!logs || logs.length === 0) && (
-                        <div className="p-6 text-center text-gray-500">
-                            Tidak ada log aktivitas ditemukan.
-                        </div>
-                    )}
-                </div>
+                {(!users || users.length === 0) && (
+                    <div className="p-6 text-center text-gray-500">
+                        Tidak ada data pengguna ditemukan.
+                    </div>
+                )}
+            </div>
+
+
+            {/* -------------------------------------------------------- */}
+            {/* ---------- BAGIAN 2: LOG AUDIT SISTEM ---------- */}
+            {/* -------------------------------------------------------- */}
+            <h2 className="text-xl font-bold text-gray-700 mb-4 mt-8 border-b pb-2">
+                Log Audit Sistem
+            </h2>
+
+            <div className="rounded-2xl overflow-hidden shadow-soft border border-gray-100 bg-white">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">ID Log</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">Waktu</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/12">Pelaku (Email)</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Aksi</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-6/12">Deskripsi Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {logs && logs.map((log) => (
+                            // Asumsi log memiliki properti: id, user_email, action, timestamp, details
+                            <tr key={log.id} className="hover:bg-gray-50 transition">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.id}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {moment(log.timestamp).format("DD MMM YYYY, HH:mm:ss")}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {log.user_email || '-'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${getActionClass(log.action)}`}>
+                                        {log.action}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-700 break-words">
+                                    {log.details || "Tidak ada detail tambahan."}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                {(!logs || logs.length === 0) && (
+                    <div className="p-6 text-center text-gray-500">
+                        Tidak ada log aktivitas ditemukan.
+                    </div>
+                )}
             </div>
 
             {/* Modal Edit/Tambah User */}

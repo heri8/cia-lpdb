@@ -87,32 +87,30 @@ const AdminRules = () => {
 
     return (
         <div className="flex-1 overflow-auto p-4 lg:p-6">
-            <div className="max-w-7xl mx-auto">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6">
-                    Administrasi Aturan Scoring AI
-                </h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">
+                Administrasi Aturan Scoring AI
+            </h1>
 
-                {/* Komponen Daftar Aturan */}
-                <RuleList rules={rules || []} onEdit={handleEdit} />
+            {/* Komponen Daftar Aturan */}
+            <RuleList rules={rules || []} onEdit={handleEdit} />
 
-                {/* Modal Edit Rule */}
-                <Modal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title={`Edit Aturan: ${selectedRule?.variabel_kode}`}
-                >
-                    {selectedRule && (
-                        <RuleForm
-                            initialData={selectedRule}
-                            onSaveWeights={handleSaveWeights}
-                            onSaveSkala={handleSaveSkala}
-                            isSaving={isSaving}
-                            saveError={saveError}
-                            saveMessage={saveMessage}
-                        />
-                    )}
-                </Modal>
-            </div>
+            {/* Modal Edit Rule */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={`Edit Aturan: ${selectedRule?.variabel_kode}`}
+            >
+                {selectedRule && (
+                    <RuleForm
+                        initialData={selectedRule}
+                        onSaveWeights={handleSaveWeights}
+                        onSaveSkala={handleSaveSkala}
+                        isSaving={isSaving}
+                        saveError={saveError}
+                        saveMessage={saveMessage}
+                    />
+                )}
+            </Modal>
         </div>
     );
 };
