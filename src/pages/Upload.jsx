@@ -1,12 +1,12 @@
 import React, { lazy, useCallback, useState } from "react";
-import { useLocation, useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useApi } from "../hooks/useApi";
 import { documentsAPI, applicationsAPI } from "../services/api";
 
 const ApplicationInfo = lazy(() => import("../components/Application/ApplicationInfo"));
 const DocumentUpload = lazy(() => import("../components/Upload/DocumentUpload"));
 const UploadHistory = lazy(() => import("../components/Upload/UploadHistory"));
-const RequiredDocuments = lazy(() => import("../components/Upload/RequiredDocuments"));
+const DocumentStatus = lazy(() => import("../components/Application/DocumentStatus"));
 
 const Upload = () => {
     const { id } = useParams();
@@ -37,6 +37,12 @@ const Upload = () => {
         () => documentsAPI.getUploadHistory(applicationId),
         [applicationId]
     );
+
+   const fetchDocumentStatus = React.useCallback(async () => {
+           if (!id) return [];
+           return documentsAPI.getUploadedDocuments(id);
+       }, [id]);
+       const { data: documents, loading: loadingDocs, error: errorDocs } = useApi(fetchDocumentStatus, [applicationId]);
 
     // 2. Panggil useApi untuk fetching data
     const {
@@ -153,76 +159,73 @@ const Upload = () => {
 
     return (
         <div className="flex-1 overflow-auto p-4 lg:p-6">
-            <div className="max-w-6xl mx-auto">
-                {/* Tombol Kembali */}
-                <Link
-                    to={`/applications`}
-                    className="flex items-center text-sm text-blue-600 hover:text-blue-800 mb-4"
-                >
-                    <i className="fas fa-arrow-left mr-2"></i> Kembali ke Daftar Aplikasi
-                </Link>
+            {/* Tombol Kembali */}
+            <Link
+                to={`/applications`}
+                className="flex items-center text-sm text-blue-600 hover:text-blue-800 mb-4"
+            >
+                <i className="fas fa-arrow-left mr-2"></i> Kembali ke Daftar Aplikasi
+            </Link>
 
-                {/* Judul Halaman */}
-                <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                    Upload & Analisis Dokumen: {applicationData?.nomor_proposal_internal || applicationId}
-                </h1>
+            {/* Judul Halaman */}
+            <h1 className="text-2xl font-bold text-gray-800 mb-4">
+                Upload & Analisis Dokumen: {applicationData?.nomor_proposal_internal || applicationId}
+            </h1>
 
-                {/* 💡 KONTROL TRIGGER AI (Lokasi Baru) */}
-                <div className="flex flex-wrap gap-3 mb-6 p-4 bg-white rounded-xl shadow-soft border border-gray-100">
-                    <span className="font-semibold text-gray-700 mr-2 self-center">Trigger Analisis:</span>
-                    {aiTriggers.map((trigger) => (
-                        <button
-                            key={trigger.name}
-                            onClick={trigger.handler}
-                            disabled={activeTrigger !== null}
-                            className={`px-4 py-2 text-sm rounded-xl transition font-medium shadow-md
+            {/* 💡 KONTROL TRIGGER AI (Lokasi Baru) */}
+            <div className="flex flex-wrap gap-3 mb-6 p-4 bg-white rounded-xl shadow-soft border border-gray-100">
+                <span className="font-semibold text-gray-700 mr-2 self-center">Trigger Analisis:</span>
+                {aiTriggers.map((trigger) => (
+                    <button
+                        key={trigger.name}
+                        onClick={trigger.handler}
+                        disabled={activeTrigger !== null}
+                        className={`px-4 py-2 text-sm rounded-xl transition font-medium shadow-md
                                 ${activeTrigger === trigger.name
-                                    ? 'bg-yellow-500 text-white cursor-wait'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400'
-                                }`}
-                        >
-                            {activeTrigger === trigger.name ? (
-                                <><i className="fas fa-spinner fa-spin mr-2"></i> Memproses...</>
-                            ) : (
-                                <><i className={`fas fa-${trigger.icon} mr-2`}></i> {trigger.name}</>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                                ? 'bg-yellow-500 text-white cursor-wait'
+                                : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400'
+                            }`}
+                    >
+                        {activeTrigger === trigger.name ? (
+                            <><i className="fas fa-spinner fa-spin mr-2"></i> Memproses...</>
+                        ) : (
+                            <><i className={`fas fa-${trigger.icon} mr-2`}></i> {trigger.name}</>
+                        )}
+                    </button>
+                ))}
+            </div>
 
-                {/* Pesan Umpan Balik Ekstraksi */}
-                {extractionMessage && (
-                    <div className={`mb-8 p-4 rounded-xl ${extractionMessage.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
-                        <p className="font-semibold text-sm">{extractionMessage.text}</p>
-                    </div>
-                )}
-
-                {/* Menampilkan Detail Aplikasi (Read-Only) */}
-                <div className="mb-8">
-                    <ApplicationInfo applicationData={applicationData} />
+            {/* Pesan Umpan Balik Ekstraksi */}
+            {extractionMessage && (
+                <div className={`mb-8 p-4 rounded-xl ${extractionMessage.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
+                    <p className="font-semibold text-sm">{extractionMessage.text}</p>
                 </div>
+            )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                        <DocumentUpload
-                            applicationId={applicationId}
-                            uploadedDocuments={uploadedDocuments || []}
-                            onUploadComplete={handleUploadComplete}
-                        />
-                    </div>
-                    <div>
-                        <RequiredDocuments
-                            uploadedDocuments={uploadedDocuments || []}
-                        />
-                    </div>
-                </div>
+            {/* Menampilkan Detail Aplikasi (Read-Only) */}
+            <div className="mb-8">
+                <ApplicationInfo applicationData={applicationData} />
+            </div>
 
-                {/* Riwayat Unggahan */}
-                <div className="mt-8">
-                    <UploadHistory
-                        history={uploadHistory || []}
-                    />
-                </div>
+            <div className="mt-8">
+                <DocumentUpload
+                    applicationId={applicationId}
+                    uploadedDocuments={uploadedDocuments || []}
+                    onUploadComplete={handleUploadComplete}
+                />
+            </div>
+
+            {/* Riwayat Unggahan */}
+            <div className="mt-8">
+                <UploadHistory
+                    history={uploadHistory || []}
+                />
+            </div>
+
+            <div className="mt-8">
+                <DocumentStatus
+                    documents={documents || []}
+                />
             </div>
         </div>
     );

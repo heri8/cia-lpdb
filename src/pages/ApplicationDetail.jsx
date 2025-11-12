@@ -2,8 +2,9 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
-import { applicationsAPI } from '../services/api';
+import { applicationsAPI, documentsAPI } from '../services/api';
 import ApplicationInfo from '../components/Application/ApplicationInfo';
+import DocumentStatus from '../components/Application/DocumentStatus';
 
 const ApplicationDetail = () => {
     const { id } = useParams();
@@ -14,10 +15,16 @@ const ApplicationDetail = () => {
         return applicationsAPI.getById(id);
     }, [id]);
 
+    const fetchDocumentStatus = React.useCallback(async () => {
+        if (!id) return [];
+        return documentsAPI.getUploadedDocuments(id);
+    }, [id]);
+
     // Panggil useApi
     const { data: application, loading, error } = useApi(fetchApplicationDetail, [id]);
+    const { data: documents, loading: loadingDocs, error: errorDocs } = useApi(fetchDocumentStatus, [id]);
 
-    if (loading) {
+    if (loading || loadingDocs) {
         return (
             <div className="p-10 text-center text-blue-500">
                 <i className="fas fa-spinner fa-spin mr-2"></i> Memuat detail aplikasi ID: {id}...
@@ -25,10 +32,10 @@ const ApplicationDetail = () => {
         );
     }
 
-    if (error) {
+    if (error || errorDocs) {
         return (
             <div className="p-10 text-center text-red-600">
-                <i className="fas fa-exclamation-triangle mr-2"></i> Gagal memuat data aplikasi: {error.message}
+                <i className="fas fa-exclamation-triangle mr-2"></i> Gagal memuat data: {errorApp?.message || errorDocs?.message}
             </div>
         );
     }
@@ -63,6 +70,9 @@ const ApplicationDetail = () => {
                     applicationData={application}
                 />
             </div>
+            <DocumentStatus
+                documents={documents || []}
+            />
 
             {/* Tambahkan bagian lain seperti Riwayat Status, Dokumen, atau Komentar di sini */}
             {/* <div className="mt-8">

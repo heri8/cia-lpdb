@@ -1,81 +1,74 @@
+import React, { useState } from "react";
 import moment from "moment";
 
-const getEventDetails = (type) => {
-    switch (type.toLowerCase()) {
-        case 'ekstraksi':
-            return {
-                icon: 'fas fa-brain', // Ikon untuk aktivitas AI/Ekstraksi
-                color: 'text-blue-600 bg-blue-100',
-            };
-        case 'dokumen': // Contoh jika ada event upload dokumen manual
-            return {
-                icon: 'fas fa-file-upload',
-                color: 'text-green-600 bg-green-100',
-            };
-        case 'notifikasi':
-            return {
-                icon: 'fas fa-bell',
-                color: 'text-yellow-600 bg-yellow-100',
-            };
-        default:
-            return {
-                icon: 'fas fa-info-circle',
-                color: 'text-gray-500 bg-gray-100',
-            };
-    }
-};
-
 const UploadHistory = ({ history = [] }) => {
-    const sortedHistory = [...history].sort((a, b) =>
-        moment(b.timestamp).valueOf() - moment(a.timestamp).valueOf()
-    );
+    // State untuk mengontrol apakah semua item ditampilkan atau hanya MAX_ITEMS
+    const [showAll, setShowAll] = useState(false);
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        return moment(dateString).format('DD MMMM YYYY, HH:mm');
+    // Batasan maksimal item yang ditampilkan di awal
+    const MAX_ITEMS = 3;
+
+    // Menentukan daftar item yang akan ditampilkan
+    const itemsToShow = showAll ? history : history.slice(0, MAX_ITEMS);
+
+    // Cek apakah ada lebih dari MAX_ITEMS item
+    const hasMore = history.length > MAX_ITEMS;
+
+    const toggleShowAll = () => {
+        setShowAll(prev => !prev);
     };
+
+    // Mengurutkan history berdasarkan uploaded_at dari yang terbaru (opsional, tapi disarankan)
+    const sortedHistory = [...history].sort((a, b) => new Date(b.uploaded_at) - new Date(a.uploaded_at));
+    const finalItemsToShow = showAll ? sortedHistory : sortedHistory.slice(0, MAX_ITEMS);
+
 
     return (
         <div className="mt-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Riwayat Aktivitas Pemrosesan
-            </h2>
-            <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Riwayat Unggahan Dokumen ({history.length} item)</h2>
 
-                {sortedHistory.length === 0 ? (
-                    <p className="text-center text-gray-500 py-4">
-                        Belum ada riwayat aktivitas yang tercatat.
-                    </p>
+            <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-6">
+
+                {history.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">Belum ada riwayat unggahan dokumen untuk aplikasi ini.</p>
                 ) : (
-                    // Menggunakan list style untuk menampilkan riwayat
-                    <ul className="space-y-4">
-                        {sortedHistory.map((item) => {
-                            const details = getEventDetails(item.type || 'default');
-                            return (
-                                <li
-                                    key={item.id}
-                                    className="flex items-start p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
-                                >
-                                    {/* Icon */}
-                                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-4 ${details.color}`}>
-                                        <i className={`${details.icon} text-lg`}></i>
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="flex-1">
-                                        {/* Title (judul event) */}
-                                        <p className="font-semibold text-gray-900">{item.title}</p>
-
-                                        {/* Timestamp */}
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            <i className="far fa-clock mr-1"></i>
-                                            {formatDate(item.timestamp)}
-                                        </p>
-                                    </div>
-                                </li>
-                            );
-                        })}
+                    <ul className="divide-y divide-gray-200">
+                        {finalItemsToShow.map((item, index) => (
+                            <li key={item.id || index} className="py-4 flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-800">
+                                        {item.nama_file_asli || 'Nama File Tidak Diketahui'}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Tipe Dokumen: <span className="font-medium text-gray-700">{item.tipe_dokumen || 'Lainnya'}</span>
+                                    </p>
+                                </div>
+                                <p className="text-xs text-gray-400">
+                                    {item.uploaded_at ? moment(item.uploaded_at).format('DD MMM YYYY, HH:mm') : 'Tanggal Tidak Diketahui'}
+                                </p>
+                            </li>
+                        ))}
                     </ul>
+                )}
+
+                {/* Tombol Read More/Collapse */}
+                {hasMore && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+                        <button
+                            onClick={toggleShowAll}
+                            className="text-blue-600 hover:text-blue-800 font-semibold text-sm transition flex items-center mx-auto"
+                        >
+                            {showAll ? (
+                                <>
+                                    <i className="fas fa-chevron-up mr-2"></i> Tampilkan Lebih Sedikit
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fas fa-chevron-down mr-2"></i> Tampilkan Semua ({history.length - MAX_ITEMS} lainnya)
+                                </>
+                            )}
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
