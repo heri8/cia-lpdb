@@ -85,6 +85,8 @@ const ApplicationForm = ({ initialData = {}, onSaveSuccess, applicationId = null
         }
     };
 
+    const allFormDisabled = isSaving || isEditing;
+
     return (
         <div className="p-4">
 
