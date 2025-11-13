@@ -8,6 +8,18 @@ const DocumentUpload = lazy(() => import("../components/Upload/DocumentUpload"))
 const DocumentStatus = lazy(() => import("../components/Application/DocumentStatus"));
 const ActivityHistory = lazy(() => import("../components/Upload/ActivityHistory"));
 
+const APPLICATION_STATUS = {
+    BARU: 'BARU',
+    PROSES_EKSTRAKSI: 'PROSES_EKSTRAKSI',
+    REVIEW_EKSTRAKSI: 'REVIEW_EKSTRAKSI',
+    SIAP_ANALISIS: 'SIAP_ANALISIS',
+    PROSES_YURIDIS: 'PROSES_YURIDIS',
+    PROSES_BISNIS: 'PROSES_BISNIS',
+    PROSES_RISIKO: 'PROSES_RISIKO',
+    ANALISIS_SELESAI: 'ANALISIS_SELESAI',
+    GAGAL: 'GAGAL',
+};
+
 const Upload = () => {
     const { id } = useParams();
     const applicationId = id;
@@ -42,7 +54,11 @@ const Upload = () => {
         if (!id) return [];
         return documentsAPI.getUploadedDocuments(id);
     }, [id]);
-    const { data: documents, loading: loadingDocs, error: errorDocs } = useApi(fetchDocumentStatus, [applicationId]);
+    const {
+        data: documents,
+        loading: loadingDocs,
+        error: errorDocs
+    } = useApi(fetchDocumentStatus, [applicationId]);
 
     // 2. Panggil useApi untuk fetching data
     const {
@@ -62,6 +78,7 @@ const Upload = () => {
     const handleUploadComplete = () => {
         refetchDocuments();
         refetchHistory();
+        refetchApplication();
     };
 
     const handleTriggerAI = async (triggerName, apiEndpointFunction) => {
@@ -83,6 +100,7 @@ const Upload = () => {
         } catch (error) {
             const msg = error.response?.data?.message || `Gagal memicu ${triggerName}. Silakan cek log.`;
             setExtractionMessage({ type: 'error', text: msg });
+            refetchApplication();
         } finally {
             setActiveTrigger(null);
             // Hapus pesan setelah 7 detik
@@ -90,36 +108,74 @@ const Upload = () => {
         }
     };
 
+    const applicationStatus = applicationData?.status_pengajuan;
+    const uploadedDocumentCount = uploadedDocuments?.length || 0;
+
+    // Fungsi untuk menentukan apakah tombol AI harus dinonaktifkan
+    const isTriggerDisabled = (triggerName) => {
+        if (activeTrigger !== null) {
+            return true;
+        }
+
+        if (triggerName === 'Ekstraksi Dokumen' && uploadedDocumentCount === 0) {
+            return true;
+        }
+
+        switch (applicationStatus) {
+            case APPLICATION_STATUS.BARU:
+                return triggerName !== 'Ekstraksi Dokumen';
+
+            case APPLICATION_STATUS.PROSES_EKSTRAKSI:
+                return triggerName === 'Ekstraksi Dokumen';
+
+            case APPLICATION_STATUS.PROSES_YURIDIS:
+                return triggerName === 'Analisis Yuridis';
+
+            case APPLICATION_STATUS.PROSES_BISNIS:
+                return triggerName === 'Analisis Bisnis';
+
+            case APPLICATION_STATUS.PROSES_RISIKO:
+                return triggerName === 'Analisis Risiko';
+
+            case APPLICATION_STATUS.REVIEW_EKSTRAKSI:
+            case APPLICATION_STATUS.SIAP_ANALISIS:
+                return false;
+
+            default:
+                return true;
+        }
+    };
+
     const aiTriggers = [
         {
             name: 'Ekstraksi Dokumen',
             icon: 'magic',
-            // ASUMSI: documentsAPI.triggerExtraction sudah ada
-            handler: () => handleTriggerAI('Ekstraksi Dokumen', applicationsAPI.runAIExtraction)
+            handler: () => handleTriggerAI('Ekstraksi Dokumen', applicationsAPI.runAIExtraction),
+            isDisabled: isTriggerDisabled('Ekstraksi Dokumen')
         },
         {
             name: 'Analisis Yuridis',
             icon: 'gavel',
-            // ASUMSI: applicationsAPI.triggerLegalAnalysis sudah ada
-            handler: () => handleTriggerAI('Analisis Yuridis', applicationsAPI.runJuridicalAnalysis)
+            handler: () => handleTriggerAI('Analisis Yuridis', applicationsAPI.runJuridicalAnalysis),
+            isDisabled: isTriggerDisabled('Analisis Yuridis')
         },
         {
             name: 'Analisis Bisnis',
             icon: 'chart-line',
-            // ASUMSI: applicationsAPI.triggerBusinessAnalysis sudah ada
-            handler: () => handleTriggerAI('Analisis Bisnis', applicationsAPI.runBusinessAnalysis)
+            handler: () => handleTriggerAI('Analisis Bisnis', applicationsAPI.runBusinessAnalysis),
+            isDisabled: isTriggerDisabled('Analisis Bisnis')
         },
         {
             name: 'Analisis Risiko',
             icon: 'shield-alt',
-            // ASUMSI: applicationsAPI.triggerRiskAnalysis sudah ada
-            handler: () => handleTriggerAI('Analisis Risiko', applicationsAPI.runRiskAnalysis)
+            handler: () => handleTriggerAI('Analisis Risiko', applicationsAPI.runRiskAnalysis),
+            isDisabled: isTriggerDisabled('Analisis Risiko')
         },
     ];
 
     // 3. Gabungkan status loading dan error
-    const isLoading = loadingDocuments || loadingHistory;
-    const isError = errorDocuments || errorHistory;
+    const isLoading = loadingDocuments || loadingHistory || loadingApplication;
+    const isError = errorDocuments || errorHistory || errorApplication;
 
     if (!applicationId) {
         return (
@@ -177,7 +233,7 @@ const Upload = () => {
                     <button
                         key={trigger.name}
                         onClick={trigger.handler}
-                        disabled={activeTrigger !== null}
+                        disabled={trigger.isDisabled}
                         className={`px-4 py-2 text-sm rounded-xl transition font-medium shadow-md
                                 ${activeTrigger === trigger.name
                                 ? 'bg-yellow-500 text-white cursor-wait'

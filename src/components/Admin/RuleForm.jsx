@@ -2,7 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 
-const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => {
+const RuleForm = ({
+    initialData,
+    onSave,
+    isSaving,
+    saveError,
+    saveMessage,
+    onSaveWeights,
+    onSaveSkala,
+    isReadOnly = false // ⭐ Tambahkan prop baru untuk mode read-only
+}) => {
     const [formData, setFormData] = useState(initialData);
 
     // Sinkronisasi state internal dengan prop external saat modal dibuka
@@ -11,6 +20,7 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
     }, [initialData]);
 
     const handleBobotChange = (e) => {
+        if (isReadOnly) return; // Nonaktifkan perubahan jika read-only
         const { name, value } = e.target;
         const numericValue = value.replace(/[^0-9.]/g, '');
         setFormData(prev => ({
@@ -20,6 +30,7 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
     };
 
     const handleSkalaChange = (skalaId, field, value) => {
+        if (isReadOnly) return; // Nonaktifkan perubahan jika read-only
         setFormData(prev => ({
             ...prev,
             skala_rules: prev.skala_rules.map(skala =>
@@ -30,6 +41,7 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
 
     const handleWeightsSubmit = (e) => {
         e.preventDefault();
+        if (isReadOnly) return; // Nonaktifkan submit jika read-only
         const weightsData = {
             bobot_u: formData.bobot_u,
             bobot_sr: formData.bobot_sr,
@@ -40,6 +52,7 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
 
     const handleSkalaSubmit = (e, skala) => {
         e.preventDefault();
+        if (isReadOnly) return; // Nonaktifkan submit jika read-only
         const skalaData = {
             skala_dihasilkan: skala.skala_dihasilkan,
             label_skala: skala.label_skala,
@@ -50,6 +63,7 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (isReadOnly) return; // Nonaktifkan submit jika read-only
         // Mengirim data bobot dan skala_rules yang sudah diubah
         onSave(formData);
     };
@@ -62,17 +76,14 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
 
     return (
         <div className="space-y-6">
-            <h4 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">
-                {formData.nama_variabel} ({formData.variabel_kode})
-            </h4>
 
-            {/* Pesan Simpan */}
-            {saveMessage && (
+            {/* Pesan Simpan HANYA muncul jika TIDAK read-only */}
+            {!isReadOnly && saveMessage && (
                 <div className="p-3 text-sm font-semibold rounded-xl text-green-700 bg-green-100 border border-green-200">
                     <i className="fas fa-check-circle mr-2"></i> {saveMessage}
                 </div>
             )}
-            {saveError && (
+            {!isReadOnly && saveError && (
                 <div className="p-3 text-sm font-semibold rounded-xl text-red-700 bg-red-100 border border-red-200">
                     <i className="fas fa-exclamation-triangle mr-2"></i> Error: {saveError}
                 </div>
@@ -89,29 +100,33 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 {bobotKey.toUpperCase().replace('_', ' ')}
                             </label>
+                            {/* Input disabled jika isReadOnly ATAU isSaving */}
                             <input
                                 type="text"
                                 name={bobotKey}
                                 value={formData[bobotKey]}
                                 onChange={handleBobotChange}
-                                disabled={isSaving}
+                                disabled={isSaving || isReadOnly} // ⭐ Tambahkan isReadOnly
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                             />
                         </div>
                     ))}
-                    <div className="flex items-end justify-start">
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition disabled:bg-yellow-400 w-full"
-                        >
-                            {isSaving ? (<i className="fas fa-spinner fa-spin"></i>) : 'Simpan Bobot'}
-                        </button>
-                    </div>
+                    {/* Tombol Simpan Bobot HANYA muncul jika TIDAK read-only */}
+                    {!isReadOnly && ( // ⭐ Sembunyikan tombol jika isReadOnly
+                        <div className="flex items-end justify-start">
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition disabled:bg-yellow-400 w-full"
+                            >
+                                {isSaving ? (<i className="fas fa-spinner fa-spin"></i>) : 'Simpan Bobot'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </form>
 
-            {/* Bagian Edit Skala Rules */}
+            {/* Bagian Skala Rules */}
             <div className="space-y-4">
                 <h5 className="font-semibold text-gray-700 border-b border-gray-100 pb-2">Skala dan Nilai Hasil</h5>
 
@@ -136,7 +151,7 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
                                 type="text"
                                 value={skala.nilai_1}
                                 onChange={(e) => handleSkalaChange(skala.id, 'nilai_1', e.target.value)}
-                                disabled={isSaving}
+                                disabled={isSaving || isReadOnly} // ⭐ Tambahkan isReadOnly
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
                             />
                         </div>
@@ -148,21 +163,23 @@ const RuleForm = ({ initialData, onSave, isSaving, saveError, saveMessage }) => 
                                 type="text"
                                 value={skala.label_skala}
                                 onChange={(e) => handleSkalaChange(skala.id, 'label_skala', e.target.value)}
-                                disabled={isSaving}
+                                disabled={isSaving || isReadOnly} // ⭐ Tambahkan isReadOnly
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
                             />
                         </div>
 
-                        {/* Tombol Simpan Skala */}
-                        <div className="flex items-center justify-end">
-                            <button
-                                type="submit"
-                                disabled={isSaving}
-                                className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:bg-blue-400 w-full"
-                            >
-                                {isSaving ? (<i className="fas fa-spinner fa-spin"></i>) : 'Simpan Skala'}
-                            </button>
-                        </div>
+                        {/* Tombol Simpan Skala HANYA muncul jika TIDAK read-only */}
+                        {!isReadOnly && (
+                            <div className="flex items-center justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:bg-blue-400 w-full"
+                                >
+                                    {isSaving ? (<i className="fas fa-spinner fa-spin"></i>) : 'Simpan Skala'}
+                                </button>
+                            </div>
+                        )}
                     </form>
                 ))}
             </div>

@@ -3,7 +3,8 @@ import { useApi } from "../hooks/useApi";
 import { adminAPI } from "../services/api";
 import RuleList from "../components/Admin/RuleList";
 import RuleForm from "../components/Admin/RuleForm";
-import Modal from "../components/Application/Modal";
+// import Modal from "../components/Application/Modal";
+import Modal from "../components/Modal";
 
 const AdminRules = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,6 +12,8 @@ const AdminRules = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState(null);
     const [saveMessage, setSaveMessage] = useState(null);
+
+    const [isReadOnlyMode, setIsReadOnlyMode] = useState(true);
 
     const fetchRules = useCallback(() => adminAPI.getRules(), []);
 
@@ -21,9 +24,21 @@ const AdminRules = () => {
         refetch: refetchRules
     } = useApi(fetchRules);
 
+    const handleShowRule = (rule) => {
+        setSelectedRule(rule);
+        setIsReadOnlyMode(true);
+        setIsModalOpen(true);
+    };
+
     const handleEdit = (rule) => {
         setSelectedRule(rule);
+        setIsReadOnlyMode(false);
         setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedRule(null);
         setSaveError(null);
         setSaveMessage(null);
     };
@@ -92,15 +107,19 @@ const AdminRules = () => {
             </h1>
 
             {/* Komponen Daftar Aturan */}
-            <RuleList rules={rules || []} onEdit={handleEdit} />
+            <RuleList
+                rules={rules || []}
+                onEdit={handleEdit}
+                onShow={handleShowRule}
+            />
 
             {/* Modal Edit Rule */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={`Edit Aturan: ${selectedRule?.variabel_kode}`}
-            >
-                {selectedRule && (
+            {selectedRule && (
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    title={isReadOnlyMode ? `Detail Rule: ${selectedRule.nama_variabel}` : `Edit Rule: ${selectedRule.nama_variabel}`}
+                >
                     <RuleForm
                         initialData={selectedRule}
                         onSaveWeights={handleSaveWeights}
@@ -108,9 +127,10 @@ const AdminRules = () => {
                         isSaving={isSaving}
                         saveError={saveError}
                         saveMessage={saveMessage}
+                        isReadOnly={isReadOnlyMode}
                     />
-                )}
-            </Modal>
+                </Modal>
+            )}
         </div>
     );
 };
