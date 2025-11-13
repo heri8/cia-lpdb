@@ -81,11 +81,11 @@ const DocumentStatus = ({ documents = [], title = "Status Dokumen Aplikasi" }) =
                                 {/* Status & Tanggal */}
                                 <div className="flex-shrink-0 flex flex-col items-end space-y-2">
                                     {/* Badge Status */}
-                                    <span
+                                    {/* <span
                                         className={`px-3 py-1 text-xs font-semibold rounded-full border ${getStatusClass(item.status || 'DRAFT')}`}
                                     >
                                         {(item.status || 'DRAFT').replace(/_/g, ' ').toUpperCase()}
-                                    </span>
+                                    </span> */}
                                     {/* Tanggal Upload */}
                                     <p className="text-xs text-gray-400">
                                         {formatDate(item.uploaded_at)}
