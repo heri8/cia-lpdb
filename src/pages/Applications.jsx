@@ -6,11 +6,14 @@ import useDebounce from "../hooks/useDebounce";
 import NewApplicationModal from "../components/Application/NewApplicationModal";
 import moment from "moment";
 
+const PAGE_SIZE = 10;
+
 const getStatusClass = (status) => {
     const normalizedStatus = status?.toUpperCase();
     const classes = {
         BARU: "bg-blue-100 text-blue-800",
         DRAFT: "bg-gray-100 text-gray-800",
+        REVIEW_EKSTRAKSI: "bg-purple-100 text-purple-800",
         LAYAK: "bg-green-100 text-green-800",
         BERSYARAT: "bg-yellow-100 text-yellow-800",
         TIDAK_LAYAK: "bg-red-100 text-red-800",
@@ -20,8 +23,8 @@ const getStatusClass = (status) => {
     if (normalizedStatus?.includes("LAYAK")) return classes.LAYAK;
     if (normalizedStatus?.includes("TIDAK LAYAK")) return classes.TIDAK_LAYAK;
     if (normalizedStatus === "BARU") return classes.BARU;
+    if (normalizedStatus === "REVIEW_EKSTRAKSI") return classes.REVIEW_EKSTRAKSI;
 
-    // Default untuk status lain
     return classes.DRAFT;
 };
 
@@ -29,18 +32,12 @@ const Applications = () => {
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState("");
-    const pageSize = 10;
+    const pageSize = PAGE_SIZE;
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [aiLoading, setAiLoading] = useState({});
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
     const openModal = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
-
-    const handleNewApplicationCreated = (id) => {
-        refetch();
-    };
 
     const fetchApplications = useCallback(() => {
         const params = {
@@ -50,32 +47,53 @@ const Applications = () => {
             search: debouncedSearchTerm,
         };
         return applicationsAPI.getAll(params);
-    }, [currentPage, statusFilter, debouncedSearchTerm]);
+    }, [currentPage, statusFilter, debouncedSearchTerm, pageSize]);
+
+    const { data, loading, error, refetch } = useApi(fetchApplications, [
+        currentPage,
+        statusFilter,
+        debouncedSearchTerm
+    ]);
+
+    const handleRefetch = useCallback(() => {
+        if (refetch) {
+            refetch();
+        }
+    }, [refetch]);
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        handleRefetch();
+    };
+
+    const handleNewApplicationCreated = (id) => {
+        handleRefetch();
+    };
 
     useEffect(() => {
-        if (debouncedSearchTerm !== "") {
+        if (currentPage !== 1 && (debouncedSearchTerm !== "" || statusFilter !== "")) {
             setCurrentPage(1);
         }
-        refetch();
-    }, [debouncedSearchTerm]);
-
-    const { data, loading, error, refetch } = useApi(fetchApplications);
+    }, [debouncedSearchTerm, statusFilter]);
 
     const applications = data?.items || [];
     const totalItems = data?.total_items || 0;
     const totalPages = data?.total_pages || 0;
 
-    const fromItem = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
-    const toItem = Math.min(currentPage * pageSize, totalItems);
+    const apiCurrentPage = data?.current_page || currentPage;
+
+    const fromItem = totalItems > 0 ? (apiCurrentPage - 1) * pageSize + 1 : 0;
+    const toItem = Math.min(apiCurrentPage * pageSize, totalItems);
+
 
     const handlePreviousPage = () => {
-        if (currentPage > 1) {
+        if (apiCurrentPage > 1) {
             setCurrentPage((prev) => prev - 1);
         }
     };
 
     const handleNextPage = () => {
-        if (currentPage < totalPages) {
+        if (apiCurrentPage < totalPages) {
             setCurrentPage((prev) => prev + 1);
         }
     };
@@ -88,51 +106,8 @@ const Applications = () => {
         navigate(`/upload/${applicationId}`);
     };
 
-    const handleTriggerAnalysis = async (applicationId, analysisType) => {
-        const key = `${applicationId}-${analysisType}`;
-        if (aiLoading[key]) return;
-
-        setAiLoading(prev => ({ ...prev, [key]: true }));
-
-        let apiCall;
-        let successMessage;
-
-        switch (analysisType) {
-            case 'ekstraksi':
-                apiCall = applicationsAPI.runAIExtraction(applicationId);
-                successMessage = "Ekstraksi AI";
-                break;
-            case 'bisnis':
-                apiCall = applicationsAPI.runBusinessAnalysis(applicationId);
-                successMessage = "Analisis Bisnis";
-                break;
-            case 'yuridis':
-                apiCall = applicationsAPI.runJuridicalAnalysis(applicationId);
-                successMessage = "Analisis Yuridis";
-                break;
-            case 'risiko':
-                apiCall = applicationsAPI.runRiskAnalysis(applicationId);
-                successMessage = "Analisis Risiko";
-                break;
-            default:
-                setAiLoading(prev => ({ ...prev, [key]: false }));
-                return;
-        }
-
-        try {
-            await apiCall;
-            alert(`${successMessage} untuk Aplikasi ID ${applicationId} berhasil dipicu!`);
-            refetch(); // Muat ulang data
-        } catch (error) {
-            console.error(`Gagal memicu ${successMessage}:`, error);
-            alert(`Gagal memicu ${successMessage}: ${error.message}`);
-        } finally {
-            setAiLoading(prev => ({ ...prev, [key]: false }));
-        }
-    };
-
     const renderContent = () => {
-        if (loading) {
+        if (loading && applications.length === 0) {
             return (
                 <div className="p-6 text-center text-blue-500">
                     <i className="fas fa-spinner fa-spin mr-2"></i> Memuat data aplikasi...
@@ -146,7 +121,7 @@ const Applications = () => {
                     <i className="fas fa-exclamation-triangle mr-2"></i> Terjadi kesalahan saat mengambil data.
                     <p className="text-sm mt-1">{error.toString()}</p>
                     <button
-                        onClick={refetch}
+                        onClick={handleRefetch}
                         className="ml-4 text-sm font-medium underline mt-2"
                     >
                         Coba Lagi
@@ -155,7 +130,7 @@ const Applications = () => {
             );
         }
 
-        if (applications.length === 0) {
+        if (applications.length === 0 && !loading) {
             return (
                 <div className="p-10 text-center text-gray-500">
                     <i className="fas fa-inbox fa-3x mb-3 text-gray-300"></i>
@@ -165,139 +140,121 @@ const Applications = () => {
             );
         }
 
-        // 6. Render Table
         return (
             <>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                {/* 1. ID */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    ID
+                                    No.
                                 </th>
-                                {/* 2. Nomor Proposal */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     No. Proposal
                                 </th>
-                                {/* 3. Tgl. Proposal (Mengganti Tgl. Pengajuan) */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Tgl. Proposal
                                 </th>
-                                {/* 4. Nama Nasabah (Mengganti Nama Perusahaan) */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Nama Nasabah
                                 </th>
-                                {/* 5. Skor Final (Mengganti Skor) */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Skor Final
                                 </th>
-                                {/* 6. Status Pengajuan (Mengganti Status) */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status Pengajuan
                                 </th>
-                                {/* 7. Aksi */}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Aksi
                                 </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {applications.map((app) => (
-                                <tr key={app.id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="font-medium text-gray-900">{app.id}</p>
-                                    </td>
+                            {applications.map((app, index) => {
+                                const rowNumber = (apiCurrentPage - 1) * pageSize + index + 1;
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-sm text-gray-900">{app.nomor_proposal_internal || '-'}</p>
-                                    </td>
+                                return (
+                                    <tr key={app.id} className="hover:bg-gray-50 transition">
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {app.tanggal_proposal ? moment(app.tanggal_proposal).format('DD MMMM YYYY') : '-'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-gray-900">{app.nama_nasabah}</p>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {app.skor_final || '-'}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-3 py-1 text-xs rounded-full ${getStatusClass(app.status_pengajuan)} font-medium`}>
-                                            {app.status_pengajuan}
-                                        </span>
-                                    </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="font-medium text-gray-900">{rowNumber}</p>
+                                        </td>
 
-                                    {/* Kolom 7: Aksi */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex space-x-2 justify-center">
-                                            {/* Tombol Lihat Detail */}
-                                            <button
-                                                onClick={() => handleViewDetail(app.id)}
-                                                className="px-2 py-1 bg-blue-500 text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
-                                                title="Lihat Detail"
-                                            >
-                                                <i className="fas fa-eye"></i>
-                                            </button>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="text-sm text-gray-900">{app.nomor_proposal_internal || '-'}</p>
+                                        </td>
 
-                                            {/* Tombol Upload Dokumen */}
-                                            <button
-                                                onClick={() => handleUploadDoc(app.id)}
-                                                className="px-2 py-1 bg-green-500 text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
-                                                title="Upload Dokumen"
-                                            >
-                                                <i className="fas fa-cloud-upload-alt"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {app.tanggal_proposal ? moment(app.tanggal_proposal).format('DD MMMM YYYY') : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="text-gray-900">{app.nama_nasabah}</p>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {app.skor_final || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-3 py-1 text-xs rounded-full ${getStatusClass(app.status_pengajuan)} font-medium`}>
+                                                {app.status_pengajuan.replace(/_/g, ' ')}
+                                            </span>
+                                        </td>
+
+                                        {/* Kolom 7: Aksi */}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex space-x-2 justify-center">
+                                                {/* Tombol Lihat Detail */}
+                                                <button
+                                                    onClick={() => handleViewDetail(app.id)}
+                                                    className="px-2 py-1 bg-blue-500 text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                                                    title="Lihat Detail"
+                                                >
+                                                    <i className="fas fa-eye"></i>
+                                                </button>
+
+                                                {/* Tombol Upload Dokumen */}
+                                                <button
+                                                    onClick={() => handleUploadDoc(app.id)}
+                                                    className="px-2 py-1 bg-green-500 text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                                                    title="Upload Dokumen"
+                                                >
+                                                    <i className="fas fa-cloud-upload-alt"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
 
-                {/* Kontrol Pagination (Tidak Berubah) */}
-                <div className="px-6 py-3 flex justify-between items-center border-t border-gray-200 bg-white">
-                    <p className="text-sm text-gray-700">
-                        Menampilkan <span className="font-medium">{fromItem}</span> sampai <span className="font-medium">{toItem}</span> dari <span className="font-medium">{totalItems}</span> hasil
-                    </p>
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={handlePreviousPage}
-                            disabled={currentPage === 1 || loading}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                            <i className="fas fa-chevron-left mr-2"></i> Sebelumnya
-                        </button>
-                        <button
-                            onClick={handleNextPage}
-                            disabled={currentPage >= totalPages || totalPages === 0 || loading}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                            Selanjutnya <i className="fas fa-chevron-right ml-2"></i>
-                        </button>
+                {/* Kontrol Pagination */}
+                {totalItems > 0 && totalPages > 1 && (
+                    <div className="px-6 py-3 flex justify-between items-center border-t border-gray-200 bg-white">
+                        <p className="text-sm text-gray-700">
+                            Menampilkan <span className="font-medium">{fromItem}</span> sampai <span className="font-medium">{toItem}</span> dari <span className="font-medium">{totalItems}</span> hasil
+                        </p>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={handlePreviousPage}
+                                disabled={apiCurrentPage === 1 || loading}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                <i className="fas fa-chevron-left mr-2"></i> Sebelumnya
+                            </button>
+                            <button
+                                onClick={handleNextPage}
+                                disabled={apiCurrentPage >= totalPages || loading}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                Selanjutnya <i className="fas fa-chevron-right ml-2"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
             </>
         );
     };
-
-    if (loading) {
-        return (
-            <div className="p-6 text-center text-blue-500">
-                <i className="fas fa-spinner fa-spin text-2xl mr-2"></i> Memuat data...
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="p-6 text-center text-red-500">
-                <i className="fas fa-exclamation-triangle mr-2"></i> Gagal memuat data:{" "}
-                {error}
-            </div>
-        );
-    }
 
     return (
         <div className="p-4 lg:p-6">
@@ -317,11 +274,10 @@ const Applications = () => {
                         }}
                         className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <select
+                    {/* <select
                         value={statusFilter}
                         onChange={(e) => {
                             setStatusFilter(e.target.value);
-                            setCurrentPage(1); // Reset page
                         }}
                         className="w-full md:w-1/6 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
@@ -330,7 +286,9 @@ const Applications = () => {
                         <option value="Layak Bersyarat">Layak Bersyarat</option>
                         <option value="Tidak Layak">Tidak Layak</option>
                         <option value="Draft">Draft</option>
-                    </select>
+                        <option value="REVIEW_EKSTRAKSI">Review Ekstraksi</option>
+                    </select> */}
+
                     <button
                         onClick={openModal}
                         className="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition font-medium">

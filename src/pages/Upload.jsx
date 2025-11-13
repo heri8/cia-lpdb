@@ -5,8 +5,8 @@ import { documentsAPI, applicationsAPI } from "../services/api";
 
 const ApplicationInfo = lazy(() => import("../components/Application/ApplicationInfo"));
 const DocumentUpload = lazy(() => import("../components/Upload/DocumentUpload"));
-const UploadHistory = lazy(() => import("../components/Upload/UploadHistory"));
 const DocumentStatus = lazy(() => import("../components/Application/DocumentStatus"));
+const ActivityHistory = lazy(() => import("../components/Upload/ActivityHistory"));
 
 const Upload = () => {
     const { id } = useParams();
@@ -38,11 +38,11 @@ const Upload = () => {
         [applicationId]
     );
 
-   const fetchDocumentStatus = React.useCallback(async () => {
-           if (!id) return [];
-           return documentsAPI.getUploadedDocuments(id);
-       }, [id]);
-       const { data: documents, loading: loadingDocs, error: errorDocs } = useApi(fetchDocumentStatus, [applicationId]);
+    const fetchDocumentStatus = React.useCallback(async () => {
+        if (!id) return [];
+        return documentsAPI.getUploadedDocuments(id);
+    }, [id]);
+    const { data: documents, loading: loadingDocs, error: errorDocs } = useApi(fetchDocumentStatus, [applicationId]);
 
     // 2. Panggil useApi untuk fetching data
     const {
@@ -70,7 +70,6 @@ const Upload = () => {
         setActiveTrigger(triggerName);
 
         try {
-            // 💡 Panggil fungsi API yang sesuai
             await apiEndpointFunction(applicationId);
 
             setExtractionMessage({ type: 'success', text: `${triggerName} berhasil dipicu. Data aplikasi akan diperbarui.` });
@@ -172,7 +171,6 @@ const Upload = () => {
                 Upload & Analisis Dokumen: {applicationData?.nomor_proposal_internal || applicationId}
             </h1>
 
-            {/* 💡 KONTROL TRIGGER AI (Lokasi Baru) */}
             <div className="flex flex-wrap gap-3 mb-6 p-4 bg-white rounded-xl shadow-soft border border-gray-100">
                 <span className="font-semibold text-gray-700 mr-2 self-center">Trigger Analisis:</span>
                 {aiTriggers.map((trigger) => (
@@ -217,7 +215,7 @@ const Upload = () => {
 
             {/* Riwayat Unggahan */}
             <div className="mt-8">
-                <UploadHistory
+                <ActivityHistory
                     history={uploadHistory || []}
                 />
             </div>

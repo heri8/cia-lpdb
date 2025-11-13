@@ -8,9 +8,6 @@ const UploadHistory = ({ history = [] }) => {
     // Batasan maksimal item yang ditampilkan di awal
     const MAX_ITEMS = 3;
 
-    // Menentukan daftar item yang akan ditampilkan
-    const itemsToShow = showAll ? history : history.slice(0, MAX_ITEMS);
-
     // Cek apakah ada lebih dari MAX_ITEMS item
     const hasMore = history.length > MAX_ITEMS;
 

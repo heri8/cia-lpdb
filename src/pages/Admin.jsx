@@ -22,12 +22,24 @@ const getStatusClass = (status) => {
 };
 
 const getActionClass = (action) => {
-    const normalizedAction = action?.toUpperCase() || '';
-    if (normalizedAction.includes("LOGIN")) return "bg-green-100 text-green-800";
-    if (normalizedAction.includes("CREATE")) return "bg-blue-100 text-blue-800";
-    if (normalizedAction.includes("UPDATE")) return "bg-yellow-100 text-yellow-800";
-    if (normalizedAction.includes("DELETE")) return "bg-red-100 text-red-800";
-    return "bg-gray-100 text-gray-800";
+    const normalizedAction = action?.toUpperCase();
+    const classes = {
+        // Sesuaikan warna sesuai tipe aksi yang mungkin dari backend
+        SELESAI: "bg-green-100 text-green-700",
+        SCORING: "bg-purple-100 text-purple-700",
+        UPLOAD: "bg-blue-100 text-blue-700",
+        REVIEW: "bg-yellow-100 text-yellow-700",
+
+        // Default untuk aksi lainnya
+        DEFAULT: "bg-gray-100 text-gray-700",
+    };
+
+    if (normalizedAction?.includes("SELESAI")) return classes.SELESAI;
+    if (normalizedAction?.includes("SCORING")) return classes.SCORING;
+    if (normalizedAction?.includes("UPLOAD")) return classes.UPLOAD;
+    if (normalizedAction?.includes("REVIEW")) return classes.REVIEW;
+
+    return classes.DEFAULT;
 };
 
 const Admin = () => {
@@ -173,22 +185,21 @@ const Admin = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {logs && logs.map((log) => (
-                            // Asumsi log memiliki properti: id, user_email, action, timestamp, details
                             <tr key={log.id} className="hover:bg-gray-50 transition">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {moment(log.timestamp).format("DD MMM YYYY, HH:mm:ss")}
+                                    {moment(log.created_at).format("DD MMM YYYY, HH:mm:ss")}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     {log.user_email || '-'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${getActionClass(log.action)}`}>
-                                        {log.action}
+                                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${getActionClass(log.tipe_aksi)}`}>
+                                        {log.tipe_aksi}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-700 break-words">
-                                    {log.details || "Tidak ada detail tambahan."}
+                                <td className="px-6 py-4 text-sm text-gray-700 break-words max-w-lg">
+                                    {log.pesan_log || "Tidak ada detail tambahan."}
                                 </td>
                             </tr>
                         ))}

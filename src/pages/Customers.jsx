@@ -1,34 +1,73 @@
-import React, { useState, useCallback } from "react";
-import { useApi } from "../hooks/useApi";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { customersAPI } from "../services/api";
+import { useApi } from "../hooks/useApi";
+import useDebounce from "../hooks/useDebounce";
 import { useNavigate } from "react-router-dom";
+
+// Ukuran halaman yang digunakan untuk client-side pagination
+const PAGE_SIZE = 10;
+
+// Fungsi helper untuk menentukan warna grade
+const getGradeClass = (grade) => {
+    const normalizedGrade = grade?.toUpperCase();
+    const classes = {
+        A: "bg-green-100 text-green-800",
+        B: "bg-blue-100 text-blue-800",
+        C: "bg-yellow-100 text-yellow-800",
+        D: "bg-orange-100 text-orange-800",
+    };
+    return classes[normalizedGrade] || "bg-gray-100 text-gray-800";
+};
 
 const Customers = () => {
     const navigate = useNavigate();
-    const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
-    const pageSize = 10;
+    const [currentPage, setCurrentPage] = useState(1);
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    const fetchCustomers = useCallback(() => {
-        const params = {
-            page: currentPage,
-            limit: pageSize,
-            search: searchTerm,
-        };
-        return customersAPI.getAll(params);
-    }, [currentPage, searchTerm]);
+    // 1. Mengambil semua data nasabah (tanpa pagination di sisi backend)
+    // Asumsi: Backend menggunakan parameter skip/limit
+    const fetchAllCustomers = useCallback(() => {
+        // Kita fetch semua data (misalnya 1000 data) untuk diolah di client
+        return customersAPI.getAll({ skip: 0, limit: 1000 });
+    }, []);
 
-    const { data, loading, error, refetch } = useApi(fetchCustomers);
+    // Gunakan useApi untuk fetching data
+    const { data: allCustomers, loading, error, refetch } = useApi(fetchAllCustomers, []);
 
-    const isArrayResponse = Array.isArray(data);
+    // Data mentah
+    const customersData = allCustomers || [];
 
-    const customers = isArrayResponse ? data : (data?.items || []);
-    const totalItems = isArrayResponse ? customers.length : (data?.total_items || 0);
-    const totalPages = isArrayResponse ? (customers.length > 0 ? 1 : 0) : (data?.total_pages || 0);
+    // 2. Client-Side Filtering
+    const filteredCustomers = useMemo(() => {
+        if (!debouncedSearchTerm) {
+            return customersData;
+        }
 
-    const fromItem = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
-    const toItem = Math.min(currentPage * pageSize, totalItems);
+        const lowerCaseSearch = debouncedSearchTerm.toLowerCase();
 
+        return customersData.filter(customer =>
+            customer.nama.toLowerCase().includes(lowerCaseSearch) ||
+            customer.kota_domisili?.toLowerCase().includes(lowerCaseSearch) ||
+            customer.tipe_nasabah.toLowerCase().includes(lowerCaseSearch)
+        );
+    }, [customersData, debouncedSearchTerm]);
+
+    // 3. Client-Side Pagination Logic
+    const totalItems = filteredCustomers.length;
+    const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+
+    const paginatedCustomers = useMemo(() => {
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const endIndex = startIndex + PAGE_SIZE;
+        return filteredCustomers.slice(startIndex, endIndex);
+    }, [filteredCustomers, currentPage]);
+
+    // Menghitung Item "Dari" dan "Sampai" untuk tampilan UI
+    const fromItem = totalItems > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
+    const toItem = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+    // 4. Kontrol Pagination
     const handlePreviousPage = () => {
         if (currentPage > 1) {
             setCurrentPage((prev) => prev - 1);
@@ -41,25 +80,13 @@ const Customers = () => {
         }
     };
 
-    const handleSearchChange = (value) => {
-        setSearchTerm(value);
+    // Reset halaman ke 1 ketika filter berubah
+    useEffect(() => {
         setCurrentPage(1);
-    }
+    }, [debouncedSearchTerm]);
 
-    const handleViewDetail = (customerId) => {
-        navigate(`/customers/${customerId}`);
-    };
 
-    const getGradeClass = (grade) => {
-        const normalizedGrade = grade?.toUpperCase();
-        const classes = {
-            A: "bg-green-100 text-green-800",
-            B: "bg-blue-100 text-blue-800",
-            C: "bg-yellow-100 text-yellow-800",
-        };
-        return classes[normalizedGrade] || "bg-gray-100 text-gray-800";
-    };
-
+    // 5. Render Content (Loading, Error, Data Kosong)
     const renderContent = () => {
         if (loading) {
             return (
@@ -71,18 +98,33 @@ const Customers = () => {
 
         if (error) {
             return (
-                <div className="p-6 text-center text-red-600">
-                    <i className="fas fa-exclamation-triangle mr-2"></i> Gagal memuat data: {error.message}
+                <div className="p-6 text-center text-red-600 bg-red-50 border border-red-200 rounded-xl">
+                    <i className="fas fa-exclamation-triangle mr-2"></i> Terjadi kesalahan saat mengambil data.
+                    <p className="text-sm mt-1">{error.toString()}</p>
+                    <button
+                        onClick={refetch}
+                        className="ml-4 text-sm font-medium underline mt-2"
+                    >
+                        Coba Lagi
+                    </button>
                 </div>
             );
         }
 
-        if (customers.length === 0) {
+        if (customersData.length === 0 && !loading) {
             return (
                 <div className="p-10 text-center text-gray-500">
                     <i className="fas fa-users-slash fa-3x mb-3 text-gray-300"></i>
-                    <h2 className="text-xl font-semibold">Tidak ada data nasabah ditemukan.</h2>
-                    <p className="text-sm">Coba ubah kata kunci pencarian Anda.</p>
+                    <p className="text-lg font-semibold">Tidak ada data nasabah yang ditemukan di server.</p>
+                </div>
+            );
+        }
+
+        if (paginatedCustomers.length === 0 && !loading && debouncedSearchTerm) {
+            return (
+                <div className="p-10 text-center text-gray-500">
+                    <i className="fas fa-search-minus fa-3x mb-3 text-gray-300"></i>
+                    <p className="text-lg font-semibold">Tidak ada nasabah yang cocok dengan kriteria pencarian.</p>
                 </div>
             );
         }
@@ -93,93 +135,93 @@ const Customers = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    ID
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Nama Nasabah
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tipe Nasabah
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Kota Domisili
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Grade Koperasi
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Aksi
-                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">No.</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[35%]">Nama Nasabah</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">Tipe Nasabah</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">Kota Domisili</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Grade</th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {customers.map((customer) => (
-                                <tr key={customer.id} className="hover:bg-gray-50 transition">
-                                    {/* ID */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="font-medium text-gray-900">{customer.id}</p>
-                                    </td>
-                                    {/* Nama */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-gray-900">{customer.nama || '-'}</p>
-                                    </td>
-                                    {/* Tipe Nasabah */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-sm text-gray-500">{customer.tipe_nasabah || '-'}</p>
-                                    </td>
-                                    {/* Kota Domisili */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <p className="text-sm text-gray-500">{customer.kota_domisili || '-'}</p>
-                                    </td>
-                                    {/* Grade Koperasi */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`px-3 py-1 text-xs rounded-full font-medium ${getGradeClass(customer.grade_koperasi)}`}
-                                        >
-                                            {customer.grade_koperasi || 'N/A'}
-                                        </span>
-                                    </td>
-                                    {/* Aksi */}
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex space-x-2">
+                            {paginatedCustomers.map((customer, index) => {
+                                // Penomoran Baris yang Benar
+                                const rowNumber = (currentPage - 1) * PAGE_SIZE + index + 1;
+
+                                return (
+                                    <tr key={customer.id} className="hover:bg-gray-50 transition">
+
+                                        {/* No. */}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="font-medium text-gray-900">{rowNumber}</p>
+                                        </td>
+
+                                        {/* Nama Nasabah */}
+                                        <td className="px-6 py-4">
+                                            <p className="text-gray-900 font-semibold">{customer.nama}</p>
+                                        </td>
+
+                                        {/* Tipe Nasabah */}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="text-sm text-gray-700">{customer.tipe_nasabah}</p>
+                                        </td>
+
+                                        {/* Kota Domisili */}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <p className="text-sm text-gray-700">{customer.kota_domisili || '-'}</p>
+                                        </td>
+
+                                        {/* Grade */}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-3 py-1 text-xs rounded-full ${getGradeClass(customer.grade_koperasi)} font-bold`}>
+                                                {customer.grade_koperasi || 'N/A'}
+                                            </span>
+                                        </td>
+
+                                        {/* Aksi */}
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
                                             <button
-                                                onClick={() => handleViewDetail(customer.id)}
-                                                className="text-primary-600 hover:text-primary-700 p-1 rounded"
-                                                title="Lihat Detail Nasabah"
+                                                onClick={() => navigate(`/customers/${customer.id}`)}
+                                                className="px-2 py-1 bg-blue-500 text-white rounded-xl text-xs font-medium hover:opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
+                                                title="Lihat Detail"
                                             >
                                                 <i className="fas fa-eye"></i>
                                             </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
 
-                {/* Kontrol Pagination (Jika totalItems > pageSize) */}
-                <div className="px-6 py-3 flex justify-between items-center border-t border-gray-200 bg-white">
-                    <p className="text-sm text-gray-700">
-                        Menampilkan <span className="font-medium">{fromItem}</span> sampai <span className="font-medium">{toItem}</span> dari <span className="font-medium">{totalItems}</span> nasabah
-                    </p>
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={handlePreviousPage}
-                            disabled={currentPage === 1 || loading}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                            <i className="fas fa-chevron-left mr-2"></i> Sebelumnya
-                        </button>
-                        <button
-                            onClick={handleNextPage}
-                            disabled={currentPage >= totalPages || totalPages === 0 || loading}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                            Selanjutnya <i className="fas fa-chevron-right ml-2"></i>
-                        </button>
+                {/* Kontrol Pagination */}
+                {totalItems > 0 && totalPages > 1 && (
+                    <div className="px-6 py-3 flex justify-between items-center border-t border-gray-200 bg-white">
+                        <p className="text-sm text-gray-700">
+                            Menampilkan <span className="font-medium">{fromItem}</span> sampai <span className="font-medium">{toItem}</span> dari <span className="font-medium">{totalItems}</span> hasil
+                        </p>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={handlePreviousPage}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                <i className="fas fa-chevron-left mr-2"></i> Sebelumnya
+                            </button>
+                            <span className="px-4 py-2 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl border border-gray-300">
+                                Halaman {currentPage} dari {totalPages}
+                            </span>
+                            <button
+                                onClick={handleNextPage}
+                                disabled={currentPage >= totalPages}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                                Selanjutnya <i className="fas fa-chevron-right ml-2"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
             </>
         );
     };
@@ -187,24 +229,19 @@ const Customers = () => {
     return (
         <div className="p-4 lg:p-6">
             <div className="bg-white rounded-2xl shadow-soft p-4 lg:p-6 border border-gray-100">
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-800 mb-6">
+                <h1 className="text-xl lg:text-2xl font-bold text-gray-800 mb-6 flex items-center">
                     Daftar Nasabah
                 </h1>
 
-                {/* Search Bar */}
-                <div className="flex justify-between items-center mb-6 space-x-4">
+                {/* Filter dan Search Bar */}
+                <div className="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
                     <input
                         type="text"
-                        placeholder="Cari Nama atau Kota Domisili Nasabah..."
+                        placeholder="Cari Nama, Kota, atau Tipe Nasabah..."
                         value={searchTerm}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    {/* <button
-                        className="w-auto px-6 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-xl hover:from-green-600 hover:to-teal-600 transition font-medium"
-                    >
-                        <i className="fas fa-plus mr-2"></i> Tambah Nasabah
-                    </button> */}
                 </div>
 
                 {/* Konten Table */}

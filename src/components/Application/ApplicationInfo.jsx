@@ -302,26 +302,6 @@ const ApplicationInfo = ({ applicationData }) => {
                 {showFullDetails && (
                     <div className="mt-8 pt-4">
                         {/* Catatan Kualitatif Per Kategori */}
-                        <h3 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-3">
-                            Catatan Analisis Kualitatif
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <DisplayField
-                                label="Catatan Analisis Yuridis"
-                                value={applicationData.hasil_yuridis?.catatan_kualitatif}
-                                isFullWidth={false}
-                            />
-                            <DisplayField
-                                label="Catatan Analisis Bisnis"
-                                value={applicationData.hasil_bisnis?.catatan_kualitatif}
-                                isFullWidth={false}
-                            />
-                            <DisplayField
-                                label="Catatan Analisis Risiko"
-                                value={applicationData.hasil_risiko?.catatan_kualitatif}
-                                isFullWidth={false}
-                            />
-                        </div>
 
                         {/* Catatan Final Analis (Area Text Lebih Besar) */}
                         <h3 className="text-xl font-bold text-gray-800 mt-8 mb-6 border-b border-gray-100 pb-3">
